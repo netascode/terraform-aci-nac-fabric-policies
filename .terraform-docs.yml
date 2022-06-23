@@ -1,0 +1,23 @@
+version: '>= 0.14.0'
+
+formatter: markdown table
+
+content: |-
+  [![Tests](https://github.com/netascode/terraform-aci-nac-fabric-policies/actions/workflows/test.yml/badge.svg)](https://github.com/netascode/terraform-aci-nac-fabric-policies/actions/workflows/test.yml)
+
+  # Terraform ACI Fabric Policies Module
+
+  A Terraform module to configure ACI Fabric Policies.
+
+  {{ .Requirements }}
+
+  {{ .Inputs }}
+
+  {{ .Outputs }}
+
+output:
+  file: README.md
+  mode: replace
+
+sort:
+  enabled: false
