@@ -128,11 +128,11 @@ module "aci_bgp_policy" {
   fabric_bgp_as = lookup(local.fabric_policies, "fabric_bgp_as", null)
   fabric_bgp_rr = [for rr in lookup(local.fabric_policies, "fabric_bgp_rr", []) : {
     node_id = rr
-    pod_id  = [for node in lookup(local.node_policies, "nodes", []) : lookup(node, "pod", local.defaults.apic.fabric_policies.fabric_bgp_rr.pod_id) if node.id == rr][0]
+    pod_id  = try([for node in lookup(local.node_policies, "nodes", []) : lookup(node, "pod", local.defaults.apic.fabric_policies.fabric_bgp_rr.pod_id) if node.id == rr][0], local.defaults.apic.node_policies.nodes.pod)
   }]
   fabric_bgp_external_rr = [for rr in lookup(local.fabric_policies, "fabric_bgp_ext_rr", []) : {
     node_id = rr
-    pod_id  = [for node in lookup(local.node_policies, "nodes", []) : lookup(node, "pod", local.defaults.apic.fabric_policies.fabric_bgp_ext_rr.pod_id) if node.id == rr][0]
+    pod_id  = try([for node in lookup(local.node_policies, "nodes", []) : lookup(node, "pod", local.defaults.apic.fabric_policies.fabric_bgp_ext_rr.pod_id) if node.id == rr][0], local.defaults.apic.node_policies.nodes.pod)
   }]
 }
 
@@ -659,7 +659,7 @@ module "aci_geolocation" {
             description = lookup(rack, "description", null)
             nodes = !contains(keys(rack), "nodes") ? null : [for node_ in rack.nodes : {
               node_id = node_
-              pod_id  = [for node in lookup(local.node_policies, "nodes", []) : lookup(node, "pod", 1) if node.id == node_][0]
+              pod_id  = try([for node in lookup(local.node_policies, "nodes", []) : lookup(node, "pod", 1) if node.id == node_][0], local.defaults.apic.node_policies.nodes.pod)
             }]
           }]
         }]
