@@ -122,7 +122,7 @@ module "aci_fabric_isis_bfd" {
 
 module "aci_bgp_policy" {
   source  = "netascode/bgp-policy/aci"
-  version = ">= 0.1.0"
+  version = ">= 0.2.0"
 
   count         = lookup(local.fabric_policies, "fabric_bgp_as", null) != null && lookup(local.modules, "aci_bgp_policy", true) ? 1 : 0
   fabric_bgp_as = lookup(local.fabric_policies, "fabric_bgp_as", null)
@@ -148,7 +148,7 @@ module "aci_date_time_format" {
 
 module "aci_dns_policy" {
   source  = "netascode/dns-policy/aci"
-  version = ">= 0.1.0"
+  version = ">= 0.2.0"
 
   for_each      = { for policy in lookup(local.fabric_policies, "dns_policies", []) : policy.name => policy if lookup(local.modules, "aci_dns_policy", true) }
   name          = "${each.value.name}${local.defaults.apic.fabric_policies.dns_policies.name_suffix}"
@@ -177,7 +177,7 @@ module "aci_error_disabled_recovery" {
 
 module "aci_date_time_policy" {
   source  = "netascode/date-time-policy/aci"
-  version = ">= 0.1.0"
+  version = ">= 0.2.0"
 
   for_each                       = { for policy in lookup(lookup(local.fabric_policies, "pod_policies", {}), "date_time_policies", []) : policy.name => policy if lookup(local.modules, "aci_date_time_policy", true) }
   name                           = "${each.value.name}${local.defaults.apic.fabric_policies.pod_policies.date_time_policies.name_suffix}"
@@ -203,7 +203,7 @@ module "aci_date_time_policy" {
 
 module "aci_snmp_policy" {
   source  = "netascode/snmp-policy/aci"
-  version = ">= 0.1.0"
+  version = ">= 0.2.0"
 
   for_each    = { for policy in lookup(lookup(local.fabric_policies, "pod_policies", {}), "snmp_policies", []) : policy.name => policy if lookup(local.modules, "aci_snmp_policy", true) }
   name        = "${each.value.name}${local.defaults.apic.fabric_policies.pod_policies.snmp_policies.name_suffix}"
@@ -250,7 +250,7 @@ module "aci_fabric_pod_policy_group" {
 
 module "aci_fabric_pod_profile_auto" {
   source  = "netascode/fabric-pod-profile/aci"
-  version = ">= 0.1.0"
+  version = ">= 0.2.0"
 
   for_each = { for pod in lookup(local.pod_policies, "pods", []) : pod.id => pod if lookup(local.apic, "auto_generate_switch_pod_profiles", local.defaults.apic.auto_generate_switch_pod_profiles) && lookup(local.modules, "aci_fabric_pod_profile", true) }
   name     = replace(each.value.id, "/^(?P<id>.+)$/", replace(lookup(local.fabric_policies, "pod_profile_name", local.defaults.apic.fabric_policies.pod_profile_name), "\\g<id>", "$id"))
@@ -271,7 +271,7 @@ module "aci_fabric_pod_profile_auto" {
 
 module "aci_fabric_pod_profile_manual" {
   source  = "netascode/fabric-pod-profile/aci"
-  version = ">= 0.1.0"
+  version = ">= 0.2.0"
 
   for_each = { for prof in lookup(local.fabric_policies, "pod_profiles", []) : prof.name => prof if lookup(local.modules, "aci_fabric_pod_profile", true) }
   name     = "${each.value.name}${local.defaults.apic.fabric_policies.pod_profiles.name_suffix}"
@@ -341,7 +341,7 @@ module "aci_fabric_spine_switch_policy_group" {
 
 module "aci_fabric_leaf_switch_profile_auto" {
   source  = "netascode/fabric-leaf-switch-profile/aci"
-  version = ">= 0.1.0"
+  version = ">= 0.2.0"
 
   for_each           = { for node in lookup(local.node_policies, "nodes", []) : node.id => node if node.role == "leaf" && lookup(local.apic, "auto_generate_switch_pod_profiles", local.defaults.apic.auto_generate_switch_pod_profiles) && lookup(local.modules, "aci_fabric_leaf_switch_profile", true) }
   name               = replace("${each.value.id}:${each.value.name}", "/^(?P<id>.+):(?P<name>.+)$/", replace(replace(lookup(local.fabric_policies, "leaf_switch_profile_name", local.defaults.apic.fabric_policies.leaf_switch_profile_name), "\\g<id>", "$id"), "\\g<name>", "$name"))
@@ -365,7 +365,7 @@ module "aci_fabric_leaf_switch_profile_auto" {
 
 module "aci_fabric_leaf_switch_profile_manual" {
   source  = "netascode/fabric-leaf-switch-profile/aci"
-  version = ">= 0.1.0"
+  version = ">= 0.2.0"
 
   for_each = { for prof in lookup(local.fabric_policies, "leaf_switch_profiles", []) : prof.name => prof if lookup(local.modules, "aci_fabric_leaf_switch_profile", true) }
   name     = each.value.name
@@ -389,7 +389,7 @@ module "aci_fabric_leaf_switch_profile_manual" {
 
 module "aci_fabric_spine_switch_profile_auto" {
   source  = "netascode/fabric-spine-switch-profile/aci"
-  version = ">= 0.1.0"
+  version = ">= 0.2.0"
 
   for_each           = { for node in lookup(local.node_policies, "nodes", []) : node.id => node if node.role == "spine" && lookup(local.apic, "auto_generate_switch_pod_profiles", local.defaults.apic.auto_generate_switch_pod_profiles) && lookup(local.modules, "aci_fabric_spine_switch_profile", true) }
   name               = replace("${each.value.id}:${each.value.name}", "/^(?P<id>.+):(?P<name>.+)$/", replace(replace(lookup(local.fabric_policies, "spine_switch_profile_name", local.defaults.apic.fabric_policies.spine_switch_profile_name), "\\g<id>", "$id"), "\\g<name>", "$name"))
@@ -413,7 +413,7 @@ module "aci_fabric_spine_switch_profile_auto" {
 
 module "aci_fabric_spine_switch_profile_manual" {
   source  = "netascode/fabric-spine-switch-profile/aci"
-  version = ">= 0.1.0"
+  version = ">= 0.2.0"
 
   for_each = { for prof in lookup(local.fabric_policies, "spine_switch_profiles", []) : prof.name => prof if lookup(local.modules, "aci_fabric_spine_switch_profile", true) }
   name     = each.value.name
@@ -469,7 +469,7 @@ module "aci_fabric_spine_interface_profile_manual" {
 
 module "aci_external_connectivity_policy" {
   source  = "netascode/external-connectivity-policy/aci"
-  version = ">= 0.1.0"
+  version = ">= 0.2.0"
 
   count        = lookup(lookup(local.fabric_policies, "external_connectivity_policy", {}), "name", null) != null && lookup(local.modules, "aci_external_connectivity_policy", true) ? 1 : 0
   name         = "${local.fabric_policies.external_connectivity_policy.name}${local.defaults.apic.fabric_policies.external_connectivity_policy.name_suffix}"
@@ -508,7 +508,7 @@ module "aci_infra_dscp_translation_policy" {
 
 module "aci_vmware_vmm_domain" {
   source  = "netascode/vmware-vmm-domain/aci"
-  version = ">= 0.1.0"
+  version = ">= 0.2.0"
 
   for_each                    = { for vmm in lookup(local.fabric_policies, "vmware_vmm_domains", []) : vmm.name => vmm if lookup(local.modules, "aci_vmware_vmm_domain", true) }
   name                        = "${each.value.name}${local.defaults.apic.fabric_policies.vmware_vmm_domains.name_suffix}"
@@ -570,7 +570,7 @@ module "aci_tacacs" {
 
 module "aci_user" {
   source  = "netascode/user/aci"
-  version = ">= 0.1.0"
+  version = ">= 0.2.0"
 
   for_each         = { for user in lookup(lookup(local.fabric_policies, "aaa", {}), "users", []) : user.username => user if lookup(local.modules, "aci_user", true) }
   username         = each.value.username
@@ -597,7 +597,7 @@ module "aci_user" {
 
 module "aci_login_domain" {
   source  = "netascode/login-domain/aci"
-  version = ">= 0.1.0"
+  version = ">= 0.2.0"
 
   for_each    = { for dom in lookup(lookup(local.fabric_policies, "aaa", {}), "login_domains", []) : dom.name => dom if lookup(local.modules, "aci_login_domain", true) }
   name        = each.value.name
@@ -637,7 +637,7 @@ module "aci_keyring" {
 
 module "aci_geolocation" {
   source  = "netascode/geolocation/aci"
-  version = ">= 0.1.0"
+  version = ">= 0.2.0"
 
   for_each    = { for site in lookup(lookup(local.fabric_policies, "geolocation", {}), "sites", []) : site.name => site if lookup(local.modules, "aci_geolocation", true) }
   name        = "${each.value.name}${local.defaults.apic.fabric_policies.geolocation.sites.name_suffix}"
@@ -691,7 +691,7 @@ module "aci_remote_location" {
 
 module "aci_fabric_scheduler" {
   source  = "netascode/fabric-scheduler/aci"
-  version = ">= 0.1.0"
+  version = ">= 0.2.0"
 
   for_each    = { for scheduler in lookup(local.fabric_policies, "schedulers", []) : scheduler.name => scheduler if lookup(local.modules, "aci_fabric_scheduler", true) }
   name        = "${each.value.name}${local.defaults.apic.fabric_policies.schedulers.name_suffix}"
@@ -723,7 +723,7 @@ module "aci_config_export" {
 
 module "aci_snmp_trap_policy" {
   source  = "netascode/snmp-trap-policy/aci"
-  version = ">= 0.1.0"
+  version = ">= 0.2.0"
 
   for_each    = { for trap in lookup(lookup(local.fabric_policies, "monitoring", {}), "snmp_traps", []) : trap.name => trap if lookup(local.modules, "aci_snmp_trap_policy", true) }
   name        = "${each.value.name}${local.defaults.apic.fabric_policies.monitoring.snmp_traps.name_suffix}"
@@ -741,7 +741,7 @@ module "aci_snmp_trap_policy" {
 
 module "aci_syslog_policy" {
   source  = "netascode/syslog-policy/aci"
-  version = ">= 0.1.0"
+  version = ">= 0.2.0"
 
   for_each            = { for syslog in lookup(lookup(local.fabric_policies, "monitoring", {}), "syslogs", []) : syslog.name => syslog if lookup(local.modules, "aci_syslog_policy", true) }
   name                = "${each.value.name}${local.defaults.apic.fabric_policies.monitoring.syslogs.name_suffix}"
