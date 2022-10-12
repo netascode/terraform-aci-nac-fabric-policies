@@ -120,6 +120,14 @@ module "aci_fabric_isis_bfd" {
   admin_state = lookup(local.fabric_policies, "fabric_isis_bfd", local.defaults.apic.fabric_policies.fabric_isis_bfd)
 }
 
+module "aci_fabric_l2_mtu" {
+  source  = "netascode/fabric-l2-mtu/aci"
+  version = ">= 0.1.0"
+
+  count       = lookup(local.modules, "aci_fabric_l2_mtu", true) == false ? 0 : 1
+  l2_port_mtu = lookup(local.fabric_policies, "l2_port_mtu", local.defaults.apic.fabric_policies.l2_port_mtu)
+}
+
 module "aci_bgp_policy" {
   source  = "netascode/bgp-policy/aci"
   version = ">= 0.2.0"
