@@ -225,7 +225,7 @@ module "aci_date_time_policy" {
 
 module "aci_snmp_policy" {
   source  = "netascode/snmp-policy/aci"
-  version = ">= 0.2.0"
+  version = ">= 0.2.1"
 
   for_each    = { for policy in lookup(lookup(local.fabric_policies, "pod_policies", {}), "snmp_policies", []) : policy.name => policy if lookup(local.modules, "aci_snmp_policy", true) }
   name        = "${each.value.name}${local.defaults.apic.fabric_policies.pod_policies.snmp_policies.name_suffix}"
