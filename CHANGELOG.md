@@ -1,3 +1,7 @@
+## 0.2.1 (unreleased)
+
+- Add L2 MTU module
+
 ## 0.2.0
 
 - Use Terraform 1.3 compatible modules
