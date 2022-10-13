@@ -1,10 +1,24 @@
 locals {
-  defaults        = lookup(var.model, "defaults", {})
-  modules         = lookup(var.model, "modules", {})
-  apic            = lookup(var.model, "apic", {})
-  fabric_policies = lookup(local.apic, "fabric_policies", {})
-  pod_policies    = lookup(local.apic, "pod_policies", {})
-  node_policies   = lookup(local.apic, "node_policies", {})
+  defaults           = lookup(var.model, "defaults", {})
+  modules            = lookup(var.model, "modules", {})
+  apic               = lookup(var.model, "apic", {})
+  fabric_policies    = lookup(local.apic, "fabric_policies", {})
+  pod_policies       = lookup(local.apic, "pod_policies", {})
+  node_policies      = lookup(local.apic, "node_policies", {})
+  interface_policies = lookup(local.apic, "interface_policies", {})
+
+  interface_types = flatten([
+    for node in lookup(local.interface_policies, "nodes", []) : [
+      for interface in lookup(node, "interfaces", []) : {
+        key     = "${node.id}/${lookup(interface, "module", local.defaults.apic.interface_policies.nodes.interfaces.module)}/${interface.port}"
+        pod_id  = try([for n in lookup(local.node_policies, "nodes", []) : lookup(n, "pod", local.defaults.apic.node_policies.nodes.pod) if n.id == node.id][0], local.defaults.apic.node_policies.nodes.pod)
+        node_id = node.id
+        module  = lookup(interface, "module", local.defaults.apic.interface_policies.nodes.interfaces.module)
+        port    = interface.port
+        type    = interface.type
+      } if lookup(interface, "type", null) != null
+    ]
+  ])
 }
 
 module "aci_apic_connectivity_preference" {
@@ -785,4 +799,16 @@ module "aci_monitoring_policy" {
     module.aci_snmp_trap_policy,
     module.aci_syslog_policy,
   ]
+}
+
+module "aci_interface_type" {
+  source  = "netascode/interface-type/aci"
+  version = ">= 0.1.0"
+
+  for_each = { for type in local.interface_types : type.key => type if lookup(local.modules, "aci_interface_type", true) }
+  pod_id   = each.value.pod_id
+  node_id  = each.value.node_id
+  module   = each.value.module
+  port     = each.value.port
+  type     = each.value.type
 }
