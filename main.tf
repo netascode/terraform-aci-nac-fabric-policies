@@ -828,7 +828,7 @@ module "aci_management_access_policy" {
   https_tlsv1                  = lookup(lookup(each.value, "https", {}), "tlsv1", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.https.tlsv1)
   https_tlsv1_1                = lookup(lookup(each.value, "https", {}), "tlsv1_1", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.https.tlsv1_1)
   https_tlsv1_2                = lookup(lookup(each.value, "https", {}), "tlsv1_2", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.https.tlsv1_2)
-  https_keyring                = lookup(lookup(each.value, "https", {}), "keyring", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.https.keyring)
+  https_keyring                = lookup(lookup(each.value, "https", {}), "key_ring", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.https.key_ring)
   http_admin_state             = lookup(lookup(each.value, "http", {}), "admin_state", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.http.admin_state)
   http_port                    = lookup(lookup(each.value, "http", {}), "port", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.http.port)
 }
