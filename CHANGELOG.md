@@ -3,6 +3,7 @@
 - Add L2 MTU module
 - Add interface type module
 - Fix SNMP policy client entry dependencies
+- Add management access policy module
 
 ## 0.2.0
 

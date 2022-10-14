@@ -801,6 +801,38 @@ module "aci_monitoring_policy" {
   ]
 }
 
+module "aci_management_access_policy" {
+  source  = "netascode/management-access-policy/aci"
+  version = ">= 0.1.0"
+
+  for_each                     = { for policy in lookup(lookup(local.fabric_policies, "pod_policies", {}), "management_access_policies", []) : policy.name => policy if lookup(local.modules, "aci_management_access_policy", true) }
+  name                         = "${each.value.name}${local.defaults.apic.fabric_policies.pod_policies.management_access_policies.name_suffix}"
+  description                  = lookup(each.value, "description", "")
+  telnet_admin_state           = lookup(lookup(each.value, "telnet", {}), "admin_state", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.telnet.admin_state)
+  telnet_port                  = lookup(lookup(each.value, "telnet", {}), "port", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.telnet.port)
+  ssh_admin_state              = lookup(lookup(each.value, "ssh", {}), "admin_state", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.admin_state)
+  ssh_password_auth            = lookup(lookup(each.value, "ssh", {}), "password_auth", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.password_auth)
+  ssh_port                     = lookup(lookup(each.value, "ssh", {}), "port", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.port)
+  ssh_aes128_ctr               = lookup(lookup(each.value, "ssh", {}), "aes128_ctr", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.aes128_ctr)
+  ssh_aes128_gcm               = lookup(lookup(each.value, "ssh", {}), "aes128_gcm", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.aes128_gcm)
+  ssh_aes192_ctr               = lookup(lookup(each.value, "ssh", {}), "aes192_ctr", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.aes192_ctr)
+  ssh_aes256_ctr               = lookup(lookup(each.value, "ssh", {}), "aes256_ctr", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.aes256_ctr)
+  ssh_chacha                   = lookup(lookup(each.value, "ssh", {}), "chacha", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.chacha)
+  ssh_hmac_sha1                = lookup(lookup(each.value, "ssh", {}), "hmac_sha1", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.hmac_sha1)
+  ssh_hmac_sha2_256            = lookup(lookup(each.value, "ssh", {}), "hmac_sha2_256", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.hmac_sha2_256)
+  ssh_hmac_sha2_512            = lookup(lookup(each.value, "ssh", {}), "hmac_sha2_512", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.hmac_sha2_512)
+  https_admin_state            = lookup(lookup(each.value, "https", {}), "admin_state", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.https.admin_state)
+  https_client_cert_auth_state = lookup(lookup(each.value, "https", {}), "client_cert_auth_state", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.https.client_cert_auth_state)
+  https_port                   = lookup(lookup(each.value, "https", {}), "port", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.https.port)
+  https_dh                     = lookup(lookup(each.value, "https", {}), "dh", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.https.dh)
+  https_tlsv1                  = lookup(lookup(each.value, "https", {}), "tlsv1", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.https.tlsv1)
+  https_tlsv1_1                = lookup(lookup(each.value, "https", {}), "tlsv1_1", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.https.tlsv1_1)
+  https_tlsv1_2                = lookup(lookup(each.value, "https", {}), "tlsv1_2", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.https.tlsv1_2)
+  https_keyring                = lookup(lookup(each.value, "https", {}), "keyring", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.https.keyring)
+  http_admin_state             = lookup(lookup(each.value, "http", {}), "admin_state", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.http.admin_state)
+  http_port                    = lookup(lookup(each.value, "http", {}), "port", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.http.port)
+}
+
 module "aci_interface_type" {
   source  = "netascode/interface-type/aci"
   version = ">= 0.1.0"
