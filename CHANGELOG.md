@@ -1,4 +1,4 @@
-## 0.3.0 (unreleased)
+## 0.3.0
 
 - Add L2 MTU module
 - Add interface type module
