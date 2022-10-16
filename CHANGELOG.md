@@ -1,9 +1,10 @@
-## 0.2.1 (unreleased)
+## 0.3.0 (unreleased)
 
 - Add L2 MTU module
 - Add interface type module
 - Fix SNMP policy client entry dependencies
 - Add management access policy module
+- Pin module dependencies
 
 ## 0.2.0
 
