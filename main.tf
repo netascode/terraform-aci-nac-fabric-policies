@@ -257,16 +257,18 @@ module "aci_snmp_policy" {
 
 module "aci_fabric_pod_policy_group" {
   source  = "netascode/fabric-pod-policy-group/aci"
-  version = "0.1.0"
+  version = "0.1.1"
 
-  for_each         = { for pg in lookup(local.fabric_policies, "pod_policy_groups", []) : pg.name => pg if lookup(local.modules, "aci_fabric_pod_policy_group", true) }
-  name             = "${each.value.name}${local.defaults.apic.fabric_policies.pod_policy_groups.name_suffix}"
-  snmp_policy      = lookup(each.value, "snmp_policy", null) != null ? "${each.value.snmp_policy}${local.defaults.apic.fabric_policies.pod_policies.snmp_policies.name_suffix}" : ""
-  date_time_policy = lookup(each.value, "date_time_policy", null) != null ? "${each.value.date_time_policy}${local.defaults.apic.fabric_policies.pod_policies.date_time_policies.name_suffix}" : ""
+  for_each                 = { for pg in lookup(local.fabric_policies, "pod_policy_groups", []) : pg.name => pg if lookup(local.modules, "aci_fabric_pod_policy_group", true) }
+  name                     = "${each.value.name}${local.defaults.apic.fabric_policies.pod_policy_groups.name_suffix}"
+  snmp_policy              = lookup(each.value, "snmp_policy", null) != null ? "${each.value.snmp_policy}${local.defaults.apic.fabric_policies.pod_policies.snmp_policies.name_suffix}" : ""
+  date_time_policy         = lookup(each.value, "date_time_policy", null) != null ? "${each.value.date_time_policy}${local.defaults.apic.fabric_policies.pod_policies.date_time_policies.name_suffix}" : ""
+  management_access_policy = lookup(each.value, "management_access_policy", null) != null ? "${each.value.management_access_policy}${local.defaults.apic.fabric_policies.pod_policies.management_access_policies.name_suffix}" : ""
 
   depends_on = [
     module.aci_snmp_policy,
     module.aci_date_time_policy,
+    module.aci_management_access_policy,
   ]
 }
 

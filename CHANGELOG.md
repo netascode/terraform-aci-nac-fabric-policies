@@ -1,6 +1,7 @@
 ## 0.3.1 (unreleased)
 
 - Add syslog policy flags and `minimum_severity`
+- Add `management_access_policy` option to pod policy groups
 
 ## 0.3.0
 
