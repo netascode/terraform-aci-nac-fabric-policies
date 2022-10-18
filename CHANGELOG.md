@@ -1,3 +1,7 @@
+## 0.3.1 (unreleased)
+
+- Add syslog policy flags and `minimum_severity`
+
 ## 0.3.0
 
 - Add L2 MTU module

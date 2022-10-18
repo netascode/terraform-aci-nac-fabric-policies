@@ -789,11 +789,18 @@ module "aci_syslog_policy" {
 
 module "aci_monitoring_policy" {
   source  = "netascode/monitoring-policy/aci"
-  version = "0.1.0"
+  version = "0.2.0"
 
   count              = lookup(local.modules, "aci_monitoring_policy", true) == false ? 0 : 1
   snmp_trap_policies = [for policy in lookup(lookup(local.fabric_policies, "monitoring", {}), "snmp_traps", []) : "${policy.name}${local.defaults.apic.fabric_policies.monitoring.snmp_traps.name_suffix}"]
-  syslog_policies    = [for policy in lookup(lookup(local.fabric_policies, "monitoring", {}), "syslogs", []) : "${policy.name}${local.defaults.apic.fabric_policies.monitoring.syslogs.name_suffix}"]
+  syslog_policies = [for policy in lookup(lookup(local.fabric_policies, "monitoring", {}), "syslogs", []) : {
+    name             = "${policy.name}${local.defaults.apic.fabric_policies.monitoring.syslogs.name_suffix}"
+    audit            = lookup(policy, "audit", local.defaults.apic.fabric_policies.monitoring.syslogs.audit)
+    events           = lookup(policy, "events", local.defaults.apic.fabric_policies.monitoring.syslogs.events)
+    faults           = lookup(policy, "faults", local.defaults.apic.fabric_policies.monitoring.syslogs.faults)
+    session          = lookup(policy, "session", local.defaults.apic.fabric_policies.monitoring.syslogs.session)
+    minimum_severity = lookup(policy, "minimum_severity", local.defaults.apic.fabric_policies.monitoring.syslogs.minimum_severity)
+  }]
 
   depends_on = [
     module.aci_snmp_trap_policy,
