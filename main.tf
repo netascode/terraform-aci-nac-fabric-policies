@@ -295,13 +295,14 @@ module "aci_fabric_pod_profile_auto" {
 
 module "aci_fabric_pod_profile_manual" {
   source  = "netascode/fabric-pod-profile/aci"
-  version = "0.2.0"
+  version = "0.2.1"
 
   for_each = { for prof in lookup(local.fabric_policies, "pod_profiles", []) : prof.name => prof if lookup(local.modules, "aci_fabric_pod_profile", true) }
   name     = "${each.value.name}${local.defaults.apic.fabric_policies.pod_profiles.name_suffix}"
   selectors = [for selector in lookup(each.value, "selectors", []) : {
     name         = "${selector.name}${local.defaults.apic.fabric_policies.pod_profiles.selectors.name_suffix}"
     policy_group = lookup(selector, "policy", null) != null ? "${selector.policy}${local.defaults.apic.fabric_policies.pod_policy_groups.name_suffix}" : null
+    type         = lookup(selector, "type", local.defaults.apic.fabric_policies.pod_profiles.selectors.type)
     pod_blocks = [for block in lookup(selector, "pod_blocks", []) : {
       name = "${block.name}${local.defaults.apic.fabric_policies.pod_profiles.selectors.pod_blocks.name_suffix}"
       from = block.from

@@ -2,6 +2,7 @@
 
 - Add syslog policy flags and `minimum_severity`
 - Add `management_access_policy` option to pod policy groups
+- Add `type` attribute to pod profile selector
 
 ## 0.3.0
 
