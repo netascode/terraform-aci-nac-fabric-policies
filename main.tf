@@ -541,9 +541,9 @@ module "aci_vmware_vmm_domain" {
   delimiter                   = lookup(each.value, "delimiter", local.defaults.apic.fabric_policies.vmware_vmm_domains.delimiter)
   tag_collection              = lookup(each.value, "tag_collection", local.defaults.apic.fabric_policies.vmware_vmm_domains.tag_collection)
   vlan_pool                   = "${each.value.vlan_pool}${local.defaults.apic.access_policies.vlan_pools.name_suffix}"
-  vswitch_cdp_policy          = lookup(lookup(each.value, "vswitch", {}), "cdp_policy", null)
-  vswitch_lldp_policy         = lookup(lookup(each.value, "vswitch", {}), "lldp_policy", null)
-  vswitch_port_channel_policy = lookup(lookup(each.value, "vswitch", {}), "port_channel_policy", null)
+  vswitch_cdp_policy          = lookup(lookup(each.value, "vswitch", {}), "cdp_policy", "")
+  vswitch_lldp_policy         = lookup(lookup(each.value, "vswitch", {}), "lldp_policy", "")
+  vswitch_port_channel_policy = lookup(lookup(each.value, "vswitch", {}), "port_channel_policy", "")
   credential_policies = [for cp in lookup(each.value, "credential_policies", []) : {
     name     = "${cp.name}${local.defaults.apic.fabric_policies.vmware_vmm_domains.credential_policies.name_suffix}"
     username = cp.username
