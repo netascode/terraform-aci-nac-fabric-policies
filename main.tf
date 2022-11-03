@@ -766,7 +766,7 @@ module "aci_snmp_trap_policy" {
 
 module "aci_syslog_policy" {
   source  = "netascode/syslog-policy/aci"
-  version = "0.2.0"
+  version = "0.2.1"
 
   for_each            = { for syslog in lookup(lookup(local.fabric_policies, "monitoring", {}), "syslogs", []) : syslog.name => syslog if lookup(local.modules, "aci_syslog_policy", true) }
   name                = "${each.value.name}${local.defaults.apic.fabric_policies.monitoring.syslogs.name_suffix}"
@@ -779,7 +779,9 @@ module "aci_syslog_policy" {
   console_admin_state = lookup(each.value, "console_admin_state", local.defaults.apic.fabric_policies.monitoring.syslogs.console_admin_state)
   console_severity    = lookup(each.value, "console_severity", local.defaults.apic.fabric_policies.monitoring.syslogs.console_severity)
   destinations = [for dest in lookup(each.value, "destinations", []) : {
+    name          = lookup(dest, "name", "")
     hostname_ip   = dest.hostname_ip
+    protocol      = lookup(dest, "protocol", null)
     port          = lookup(dest, "port", local.defaults.apic.fabric_policies.monitoring.syslogs.destinations.port)
     admin_state   = lookup(dest, "admin_state", local.defaults.apic.fabric_policies.monitoring.syslogs.destinations.admin_state)
     format        = lookup(each.value, "format", local.defaults.apic.fabric_policies.monitoring.syslogs.format)
