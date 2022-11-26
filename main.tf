@@ -74,6 +74,7 @@ module "aci_fabric_wide_settings" {
   disable_remote_endpoint_learn = lookup(lookup(local.fabric_policies, "global_settings", {}), "disable_remote_endpoint_learn", local.defaults.apic.fabric_policies.global_settings.disable_remote_endpoint_learn)
   overlapping_vlan_validation   = lookup(lookup(local.fabric_policies, "global_settings", {}), "overlapping_vlan_validation", local.defaults.apic.fabric_policies.global_settings.overlapping_vlan_validation)
   remote_leaf_direct            = lookup(lookup(local.fabric_policies, "global_settings", {}), "remote_leaf_direct", local.defaults.apic.fabric_policies.global_settings.remote_leaf_direct)
+  reallocate_gipo               = lookup(lookup(local.fabric_policies, "global_settings", {}), "reallocate_gipo", local.defaults.apic.fabric_policies.global_settings.reallocate_gipo)
 }
 
 module "aci_port_tracking" {
