@@ -1,3 +1,7 @@
+## 0.3.2 (unreleased)
+
+- Add reallocate GIPO fabric-wide setting
+
 ## 0.3.1
 
 - Add syslog policy flags and `minimum_severity`
