@@ -65,7 +65,7 @@ module "aci_rogue_endpoint_control" {
 
 module "aci_fabric_wide_settings" {
   source  = "netascode/fabric-wide-settings/aci"
-  version = "0.1.0"
+  version = "0.1.1"
 
   count                         = lookup(local.modules, "aci_fabric_wide_settings", true) == false ? 0 : 1
   domain_validation             = lookup(lookup(local.fabric_policies, "global_settings", {}), "domain_validation", local.defaults.apic.fabric_policies.global_settings.domain_validation)
