@@ -277,7 +277,7 @@ module "aci_fabric_pod_profile_auto" {
   source  = "netascode/fabric-pod-profile/aci"
   version = "0.2.1"
 
-  for_each = { for pod in lookup(local.pod_policies, "pods", []) : pod.id => pod if lookup(local.apic, "auto_generate_switch_pod_profiles", local.defaults.apic.auto_generate_switch_pod_profiles) && lookup(local.modules, "aci_fabric_pod_profile", true) }
+  for_each = { for pod in lookup(local.pod_policies, "pods", []) : pod.id => pod if(lookup(local.apic, "auto_generate_switch_pod_profiles", local.defaults.apic.auto_generate_switch_pod_profiles) || lookup(local.apic, "auto_generate_pod_profiles", local.defaults.apic.auto_generate_pod_profiles)) && lookup(local.modules, "aci_fabric_pod_profile", true) }
   name     = replace(each.value.id, "/^(?P<id>.+)$/", replace(lookup(local.fabric_policies, "pod_profile_name", local.defaults.apic.fabric_policies.pod_profile_name), "\\g<id>", "$id"))
   selectors = [{
     name         = replace(each.value.id, "/^(?P<id>.+)$/", replace(lookup(local.fabric_policies, "pod_selector_name", local.defaults.apic.fabric_policies.pod_profile_pod_selector_name), "\\g<id>", "$id"))
@@ -369,7 +369,7 @@ module "aci_fabric_leaf_switch_profile_auto" {
   source  = "netascode/fabric-leaf-switch-profile/aci"
   version = "0.2.0"
 
-  for_each           = { for node in lookup(local.node_policies, "nodes", []) : node.id => node if node.role == "leaf" && lookup(local.apic, "auto_generate_switch_pod_profiles", local.defaults.apic.auto_generate_switch_pod_profiles) && lookup(local.modules, "aci_fabric_leaf_switch_profile", true) }
+  for_each           = { for node in lookup(local.node_policies, "nodes", []) : node.id => node if node.role == "leaf" && (lookup(local.apic, "auto_generate_switch_pod_profiles", local.defaults.apic.auto_generate_switch_pod_profiles) || lookup(local.apic, "auto_generate_fabric_leaf_switch_interface_profiles", local.defaults.apic.auto_generate_fabric_leaf_switch_interface_profiles)) && lookup(local.modules, "aci_fabric_leaf_switch_profile", true) }
   name               = replace("${each.value.id}:${each.value.name}", "/^(?P<id>.+):(?P<name>.+)$/", replace(replace(lookup(local.fabric_policies, "leaf_switch_profile_name", local.defaults.apic.fabric_policies.leaf_switch_profile_name), "\\g<id>", "$id"), "\\g<name>", "$name"))
   interface_profiles = [replace("${each.value.id}:${each.value.name}", "/^(?P<id>.+):(?P<name>.+)$/", replace(replace(lookup(local.fabric_policies, "leaf_interface_profile_name", local.defaults.apic.fabric_policies.leaf_interface_profile_name), "\\g<id>", "$id"), "\\g<name>", "$name"))]
   selectors = [{
@@ -417,7 +417,7 @@ module "aci_fabric_spine_switch_profile_auto" {
   source  = "netascode/fabric-spine-switch-profile/aci"
   version = "0.2.0"
 
-  for_each           = { for node in lookup(local.node_policies, "nodes", []) : node.id => node if node.role == "spine" && lookup(local.apic, "auto_generate_switch_pod_profiles", local.defaults.apic.auto_generate_switch_pod_profiles) && lookup(local.modules, "aci_fabric_spine_switch_profile", true) }
+  for_each           = { for node in lookup(local.node_policies, "nodes", []) : node.id => node if node.role == "spine" && (lookup(local.apic, "auto_generate_switch_pod_profiles", local.defaults.apic.auto_generate_switch_pod_profiles) || lookup(local.apic, "auto_generate_fabric_spine_switch_interface_profiles", local.defaults.apic.auto_generate_fabric_spine_switch_interface_profiles)) && lookup(local.modules, "aci_fabric_spine_switch_profile", true) }
   name               = replace("${each.value.id}:${each.value.name}", "/^(?P<id>.+):(?P<name>.+)$/", replace(replace(lookup(local.fabric_policies, "spine_switch_profile_name", local.defaults.apic.fabric_policies.spine_switch_profile_name), "\\g<id>", "$id"), "\\g<name>", "$name"))
   interface_profiles = [replace("${each.value.id}:${each.value.name}", "/^(?P<id>.+):(?P<name>.+)$/", replace(replace(lookup(local.fabric_policies, "spine_interface_profile_name", local.defaults.apic.fabric_policies.spine_interface_profile_name), "\\g<id>", "$id"), "\\g<name>", "$name"))]
   selectors = [{
@@ -465,7 +465,7 @@ module "aci_fabric_leaf_interface_profile_auto" {
   source  = "netascode/fabric-leaf-interface-profile/aci"
   version = "0.1.0"
 
-  for_each = { for node in lookup(local.node_policies, "nodes", []) : node.id => node if node.role == "leaf" && lookup(local.apic, "auto_generate_switch_pod_profiles", local.defaults.apic.auto_generate_switch_pod_profiles) && lookup(local.modules, "aci_fabric_leaf_interface_profile", true) }
+  for_each = { for node in lookup(local.node_policies, "nodes", []) : node.id => node if node.role == "leaf" && (lookup(local.apic, "auto_generate_switch_pod_profiles", local.defaults.apic.auto_generate_switch_pod_profiles) || lookup(local.apic, "auto_generate_fabric_leaf_switch_interface_profiles", local.defaults.apic.auto_generate_fabric_leaf_switch_interface_profiles)) && lookup(local.modules, "aci_fabric_leaf_interface_profile", true) }
   name     = replace("${each.value.id}:${each.value.name}", "/^(?P<id>.+):(?P<name>.+)$/", replace(replace(lookup(local.fabric_policies, "leaf_interface_profile_name", local.defaults.apic.fabric_policies.leaf_interface_profile_name), "\\g<id>", "$id"), "\\g<name>", "$name"))
 }
 
@@ -481,7 +481,7 @@ module "aci_fabric_spine_interface_profile_auto" {
   source  = "netascode/fabric-spine-interface-profile/aci"
   version = "0.1.0"
 
-  for_each = { for node in lookup(local.node_policies, "nodes", []) : node.id => node if node.role == "spine" && lookup(local.apic, "auto_generate_switch_pod_profiles", local.defaults.apic.auto_generate_switch_pod_profiles) && lookup(local.modules, "aci_fabric_spine_interface_profile", true) }
+  for_each = { for node in lookup(local.node_policies, "nodes", []) : node.id => node if node.role == "spine" && (lookup(local.apic, "auto_generate_switch_pod_profiles", local.defaults.apic.auto_generate_switch_pod_profiles) || lookup(local.apic, "auto_generate_fabric_spine_switch_interface_profiles", local.defaults.apic.auto_generate_fabric_spine_switch_interface_profiles)) && lookup(local.modules, "aci_fabric_spine_interface_profile", true) }
   name     = replace("${each.value.id}:${each.value.name}", "/^(?P<id>.+):(?P<name>.+)$/", replace(replace(lookup(local.fabric_policies, "spine_interface_profile_name", local.defaults.apic.fabric_policies.spine_interface_profile_name), "\\g<id>", "$id"), "\\g<name>", "$name"))
 }
 
