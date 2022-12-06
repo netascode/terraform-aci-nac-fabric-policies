@@ -275,7 +275,7 @@ module "aci_fabric_pod_policy_group" {
 
 module "aci_fabric_pod_profile_auto" {
   source  = "netascode/fabric-pod-profile/aci"
-  version = "0.2.0"
+  version = "0.2.1"
 
   for_each = { for pod in lookup(local.pod_policies, "pods", []) : pod.id => pod if lookup(local.apic, "auto_generate_switch_pod_profiles", local.defaults.apic.auto_generate_switch_pod_profiles) && lookup(local.modules, "aci_fabric_pod_profile", true) }
   name     = replace(each.value.id, "/^(?P<id>.+)$/", replace(lookup(local.fabric_policies, "pod_profile_name", local.defaults.apic.fabric_policies.pod_profile_name), "\\g<id>", "$id"))
