@@ -280,7 +280,7 @@ module "aci_fabric_pod_profile_auto" {
   for_each = { for pod in lookup(local.pod_policies, "pods", []) : pod.id => pod if(lookup(local.apic, "auto_generate_switch_pod_profiles", local.defaults.apic.auto_generate_switch_pod_profiles) || lookup(local.apic, "auto_generate_pod_profiles", local.defaults.apic.auto_generate_pod_profiles)) && lookup(local.modules, "aci_fabric_pod_profile", true) }
   name     = replace(each.value.id, "/^(?P<id>.+)$/", replace(lookup(local.fabric_policies, "pod_profile_name", local.defaults.apic.fabric_policies.pod_profile_name), "\\g<id>", "$id"))
   selectors = [{
-    name         = replace(each.value.id, "/^(?P<id>.+)$/", replace(lookup(local.fabric_policies, "pod_selector_name", local.defaults.apic.fabric_policies.pod_profile_pod_selector_name), "\\g<id>", "$id"))
+    name         = replace(each.value.id, "/^(?P<id>.+)$/", replace(lookup(local.fabric_policies, "pod_profile_pod_selector_name", local.defaults.apic.fabric_policies.pod_profile_pod_selector_name), "\\g<id>", "$id"))
     policy_group = lookup(each.value, "policy", null) != null ? "${each.value.policy}${local.defaults.apic.fabric_policies.pod_policy_groups.name_suffix}" : null
     pod_blocks = [{
       name = each.value.id
