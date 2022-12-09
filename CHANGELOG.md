@@ -1,4 +1,4 @@
-## 0.3.4 (unreleased)
+## 0.3.4
 
 - Add support for `auto_generate_pod_profiles`, `auto_generate_fabric_leaf_switch_interface_profiles` and `auto_generate_fabric_spine_switch_interface_profiles` flags
 - Fix auto-generated pod profile selector name
