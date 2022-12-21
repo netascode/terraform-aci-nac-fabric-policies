@@ -857,3 +857,15 @@ module "aci_interface_type" {
   port     = each.value.port
   type     = each.value.type
 }
+
+module "aci_smart_licensing" {
+  source  = "netascode/smart-licensing/aci"
+  version = "0.1.0"
+
+  count              = lookup(local.modules, "aci_smart_licensing", true) == false ? 0 : 1
+  mode               = try(local.fabric_policies.smart_licensing.mode, local.defaults.apic.fabric_policies.smart_licensing.mode)
+  registration_token = try(local.fabric_policies.smart_licensing.registration_token, "")
+  url                = try(local.fabric_policies.smart_licensing.url, local.defaults.apic.fabric_policies.smart_licensing.url)
+  proxy_hostname_ip  = try(local.fabric_policies.smart_licensing.proxy.hostname_ip, "")
+  proxy_port         = try(local.fabric_policies.smart_licensing.proxy.port, local.defaults.apic.fabric_policies.smart_licensing.proxy.port)
+}
