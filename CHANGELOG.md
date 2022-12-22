@@ -1,6 +1,7 @@
 ## 0.3.5 (unreleased)
 
 - Add support for smart licensing
+- Fix regex validation of VMware VMM vCenter username to allow for `domain\username` format
 
 ## 0.3.4
 

@@ -534,7 +534,7 @@ module "aci_infra_dscp_translation_policy" {
 
 module "aci_vmware_vmm_domain" {
   source  = "netascode/vmware-vmm-domain/aci"
-  version = "0.2.0"
+  version = "0.2.1"
 
   for_each                    = { for vmm in lookup(local.fabric_policies, "vmware_vmm_domains", []) : vmm.name => vmm if lookup(local.modules, "aci_vmware_vmm_domain", true) }
   name                        = "${each.value.name}${local.defaults.apic.fabric_policies.vmware_vmm_domains.name_suffix}"
