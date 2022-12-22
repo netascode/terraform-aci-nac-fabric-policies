@@ -869,3 +869,11 @@ module "aci_smart_licensing" {
   proxy_hostname_ip  = try(local.fabric_policies.smart_licensing.proxy.hostname_ip, "")
   proxy_port         = try(local.fabric_policies.smart_licensing.proxy.port, local.defaults.apic.fabric_policies.smart_licensing.proxy.port)
 }
+
+module "aci_health_score_evaluation_policy" {
+  source  = "netascode/health-score-evaluation-policy/aci"
+  version = "0.1.0"
+
+  count               = try(local.modules.aci_health_score_evaluation_policy, true) ? 1 : 0
+  ignore_acked_faults = try(local.fabric_policies.ignore_acked_faults, local.defaults.apic.fabric_policies.ignore_acked_faults)
+}

@@ -2,6 +2,7 @@
 
 - Add support for smart licensing
 - Fix regex validation of VMware VMM vCenter username to allow for `domain\username` format
+- Add health score evaluation policy
 
 ## 0.3.4
 
