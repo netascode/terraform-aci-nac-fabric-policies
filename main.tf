@@ -862,7 +862,7 @@ module "aci_smart_licensing" {
   source  = "netascode/smart-licensing/aci"
   version = "0.1.0"
 
-  count              = lookup(local.modules, "aci_smart_licensing", true) == false ? 0 : 1
+  count              = lookup(local.modules, "aci_smart_licensing", true) == true && try(local.fabric_policies.smart_licensing.registration_token, "") != "" ? 1 : 0
   mode               = try(local.fabric_policies.smart_licensing.mode, local.defaults.apic.fabric_policies.smart_licensing.mode)
   registration_token = try(local.fabric_policies.smart_licensing.registration_token, "")
   url                = try(local.fabric_policies.smart_licensing.url, local.defaults.apic.fabric_policies.smart_licensing.url)
