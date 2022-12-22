@@ -795,7 +795,7 @@ module "aci_syslog_policy" {
 
 module "aci_monitoring_policy" {
   source  = "netascode/monitoring-policy/aci"
-  version = "0.2.0"
+  version = "0.2.1"
 
   count              = lookup(local.modules, "aci_monitoring_policy", true) == false ? 0 : 1
   snmp_trap_policies = [for policy in lookup(lookup(local.fabric_policies, "monitoring", {}), "snmp_traps", []) : "${policy.name}${local.defaults.apic.fabric_policies.monitoring.snmp_traps.name_suffix}"]
