@@ -891,12 +891,12 @@ module "aci_fabric_span_destination_group" {
 
   for_each            = { for span in try(local.fabric_policies.span.destination_groups, []) : span.name => span if lookup(local.modules, "aci_fabric_span_destination_group", true) }
   name                = "${each.value.name}${local.defaults.apic.fabric_policies.span.destination_groups.name_suffix}"
-  description         = try(each.value.description, null)
-  tenant              = try(each.value.tenant, null)
-  application_profile = try(each.value.application_profile, null)
-  endpoint_group      = try(each.value.endpoint_group, null)
-  ip                  = try(each.value.ip, null)
-  source_prefix       = try(each.value.source_prefix, null)
+  description         = try(each.value.description, "")
+  tenant              = try(each.value.tenant, "")
+  application_profile = try(each.value.application_profile, "")
+  endpoint_group      = try(each.value.endpoint_group, "")
+  ip                  = try(each.value.ip, "")
+  source_prefix       = try(each.value.source_prefix, "")
   dscp                = try(each.value.dscp, local.defaults.apic.fabric_policies.span.destination_groups.dscp)
   flow_id             = try(each.value.flow_id, local.defaults.apic.fabric_policies.span.destination_groups.flow_id)
   mtu                 = try(each.value.mtu, local.defaults.apic.fabric_policies.span.destination_groups.mtu)
@@ -911,16 +911,16 @@ module "aci_fabric_span_source_group" {
 
   for_each    = { for span in try(local.fabric_policies.span.source_groups, []) : span.name => span if lookup(local.modules, "aci_fabric_span_source_group", true) }
   name        = "${each.value.name}${local.defaults.apic.fabric_policies.span.source_groups.name_suffix}"
-  description = try(each.value.description, null)
+  description = try(each.value.description, "")
   admin_state = try(each.value.admin_state, local.defaults.apic.fabric_policies.span.source_groups.admin_state)
   sources = [for s in try(local.fabric_policies.span.source_groups.sources, []) : {
     name          = "${s.name}${local.defaults.apic.fabric_policies.span.source_groups.sources.name_suffix}"
-    description   = try(s.description, null)
+    description   = try(s.description, "")
     direction     = try(s.direction, local.defaults.apic.fabric_policies.span.source_groups.sources.direction)
     span_drop     = try(s.span_drop, local.defaults.apic.fabric_policies.span.source_groups.sources.span_drop)
-    tenant        = try(s.tenant, null)
-    vrf           = try(s.vrf, null)
-    bridge_domain = try(s.bridge_domain, null)
+    tenant        = try(s.tenant, "")
+    vrf           = try(s.vrf, "")
+    bridge_domain = try(s.bridge_domain, "")
     fabric_paths = [for fp in try(s.fabric_paths, []) : {
       node_id = fp.node_id
       pod_id  = try(fp.pod_id, [for n in lookup(local.node_policies, "nodes", []) : lookup(n, "pod", local.defaults.apic.node_policies.nodes.pod) if n.id == fp.node_id][0], local.defaults.apic.node_policies.nodes.pod)
