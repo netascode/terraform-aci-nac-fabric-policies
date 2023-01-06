@@ -884,3 +884,23 @@ module "aci_health_score_evaluation_policy" {
   count               = try(local.modules.aci_health_score_evaluation_policy, true) ? 1 : 0
   ignore_acked_faults = try(local.fabric_policies.ignore_acked_faults, local.defaults.apic.fabric_policies.ignore_acked_faults)
 }
+
+module "aci_fabric_span_destination_group" {
+  source  = "netascode/fabric-span-destination-group/aci"
+  version = "0.1.0"
+
+  for_each            = { for span in try(local.fabric_policies.span.destination_groups, []) : span.name => span if lookup(local.modules, "aci_fabric_span_destination_group", true) }
+  name                = "${each.value.name}${local.defaults.apic.fabric_policies.span.destination_groups.name_suffix}"
+  description         = try(span.description, null)
+  tenant              = try(span.tenant, null)
+  application_profile = try(span.application_profile, null)
+  endpoint_group      = try(span.endpoint_group, null)
+  ip                  = try(span.ip, null)
+  source_prefix       = try(span.source_prefix, null)
+  dscp                = try(span.dscp, local.defaults.apic.fabric_policies.span.destination_groups.dscp)
+  flow_id             = try(span.flow_id, local.defaults.apic.fabric_policies.span.destination_groups.flow_id)
+  mtu                 = try(span.mtu, local.defaults.apic.fabric_policies.span.destination_groups.mtu)
+  ttl                 = try(span.ttl, local.defaults.apic.fabric_policies.span.destination_groups.ttl)
+  span_version        = try(span.span_version, local.defaults.apic.fabric_policies.span.destination_groups.span_version)
+  enforce_version     = try(span.enforce_version, local.defaults.apic.fabric_policies.span.destination_groups.enforce_version)
+}
