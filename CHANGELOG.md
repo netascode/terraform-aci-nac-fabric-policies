@@ -5,6 +5,7 @@
 - Add health score evaluation policy
 - Add support for enhanced LAGs and uplink configuration for VMware VMM domains
 - Add fabric SPAN destination group
+- Add fabric SPAN source group
 
 ## 0.3.4
 

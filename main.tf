@@ -904,3 +904,30 @@ module "aci_fabric_span_destination_group" {
   span_version        = try(span.span_version, local.defaults.apic.fabric_policies.span.destination_groups.span_version)
   enforce_version     = try(span.enforce_version, local.defaults.apic.fabric_policies.span.destination_groups.enforce_version)
 }
+
+module "aci_fabric_span_source_group" {
+  source  = "netascode/fabric-span-source-group/aci"
+  version = "0.1.0"
+
+  for_each    = { for span in try(local.fabric_policies.span.source_groups, []) : span.name => span if lookup(local.modules, "aci_fabric_span_source_group", true) }
+  name        = "${each.value.name}${local.defaults.apic.fabric_policies.span.source_groups.name_suffix}"
+  description = try(span.description, null)
+  admin_state = try(span.admin_state, local.defaults.apic.fabric_policies.span.source_groups.admin_state)
+  sources = [for s in try(local.fabric_policies.span.source_groups.sources, []) : {
+    name          = "${s.name}${local.defaults.apic.fabric_policies.span.source_groups.sources.name_suffix}"
+    description   = try(s.description, null)
+    direction     = try(s.direction, local.defaults.apic.fabric_policies.span.source_groups.sources.direction)
+    span_drop     = try(s.span_drop, local.defaults.apic.fabric_policies.span.source_groups.sources.span_drop)
+    tenant        = try(s.tenant, null)
+    vrf           = try(s.vrf, null)
+    bridge_domain = try(s.bridge_domain, null)
+    fabric_paths = [for fp in try(s.fabric_paths, []) : {
+      node_id = fp.node_id
+      pod_id  = try(fp.pod_id, [for n in lookup(local.node_policies, "nodes", []) : lookup(n, "pod", local.defaults.apic.node_policies.nodes.pod) if n.id == fp.node_id][0], local.defaults.apic.node_policies.nodes.pod)
+      port    = fp.port
+      module  = try(fp.module, 1)
+    }]
+  }]
+  destination_name        = "${each.value.destination.name}${local.defaults.apic.fabric_policies.span.source_groups.destination.name_suffix}"
+  destination_description = try(each.value.destination.description, "")
+}
