@@ -561,7 +561,7 @@ module "aci_vmware_vmm_domain" {
     mgmt_epg_name     = lookup(vc, "mgmt_epg", local.defaults.apic.fabric_policies.vmware_vmm_domains.vcenters.mgmt_epg) == "oob" ? lookup(local.node_policies, "oob_endpoint_group", local.defaults.apic.node_policies.oob_endpoint_group) : lookup(local.node_policies, "inb_endpoint_group", local.defaults.apic.node_policies.inb_endpoint_group)
   }]
   vswitch_enhanced_lags = [for vel in lookup(lookup(each.value, "vswitch", {}), "enhanced_lags", []) : {
-    name      = vel.name
+    name      = "${vel.name}${local.defaults.apic.fabric_policies.vmware_vmm_domains.vswitch.enhanced_lags.name_suffix}"
     lb_mode   = lookup(vel, "lb_mode", local.defaults.apic.fabric_policies.vmware_vmm_domains.vswitch.enhanced_lags.lb_mode)
     mode      = lookup(vel, "mode", local.defaults.apic.fabric_policies.vmware_vmm_domains.vswitch.enhanced_lags.mode)
     num_links = lookup(vel, "num_links", local.defaults.apic.fabric_policies.vmware_vmm_domains.vswitch.enhanced_lags.num_links)
@@ -918,9 +918,9 @@ module "aci_fabric_span_source_group" {
     description   = try(s.description, "")
     direction     = try(s.direction, local.defaults.apic.fabric_policies.span.source_groups.sources.direction)
     span_drop     = try(s.span_drop, local.defaults.apic.fabric_policies.span.source_groups.sources.span_drop)
-    tenant        = try(s.tenant, "")
-    vrf           = try(s.vrf, "")
-    bridge_domain = try(s.bridge_domain, "")
+    tenant        = try(s.tenant, null)
+    vrf           = try(s.vrf, null)
+    bridge_domain = try(s.bridge_domain, null)
     fabric_paths = [for fp in try(s.fabric_paths, []) : {
       node_id = fp.node_id
       pod_id  = try(fp.pod_id, [for n in lookup(local.node_policies, "nodes", []) : lookup(n, "pod", local.defaults.apic.node_policies.nodes.pod) if n.id == fp.node_id][0], local.defaults.apic.node_policies.nodes.pod)
