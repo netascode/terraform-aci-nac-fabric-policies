@@ -901,7 +901,7 @@ module "aci_fabric_span_destination_group" {
   flow_id             = try(each.value.flow_id, local.defaults.apic.fabric_policies.span.destination_groups.flow_id)
   mtu                 = try(each.value.mtu, local.defaults.apic.fabric_policies.span.destination_groups.mtu)
   ttl                 = try(each.value.ttl, local.defaults.apic.fabric_policies.span.destination_groups.ttl)
-  span_version        = try(each.value.span_version, local.defaults.apic.fabric_policies.span.destination_groups.span_version)
+  span_version        = try(each.value.version, local.defaults.apic.fabric_policies.span.destination_groups.version)
   enforce_version     = try(each.value.enforce_version, local.defaults.apic.fabric_policies.span.destination_groups.enforce_version)
 }
 
@@ -928,6 +928,6 @@ module "aci_fabric_span_source_group" {
       module  = try(fp.module, 1)
     }]
   }]
-  destination_name        = "${each.value.destination.name}${local.defaults.apic.fabric_policies.span.source_groups.destination.name_suffix}"
+  destination_name        = "${each.value.destination.name}${local.defaults.apic.fabric_policies.span.destination_groups.name_suffix}"
   destination_description = try(each.value.destination.description, "")
 }
