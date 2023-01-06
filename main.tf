@@ -534,7 +534,7 @@ module "aci_infra_dscp_translation_policy" {
 
 module "aci_vmware_vmm_domain" {
   source  = "netascode/vmware-vmm-domain/aci"
-  version = "0.2.1"
+  version = "0.2.2"
 
   for_each                    = { for vmm in lookup(local.fabric_policies, "vmware_vmm_domains", []) : vmm.name => vmm if lookup(local.modules, "aci_vmware_vmm_domain", true) }
   name                        = "${each.value.name}${local.defaults.apic.fabric_policies.vmware_vmm_domains.name_suffix}"
@@ -560,6 +560,13 @@ module "aci_vmware_vmm_domain" {
     mgmt_epg_type     = lookup(vc, "mgmt_epg", local.defaults.apic.fabric_policies.vmware_vmm_domains.vcenters.mgmt_epg)
     mgmt_epg_name     = lookup(vc, "mgmt_epg", local.defaults.apic.fabric_policies.vmware_vmm_domains.vcenters.mgmt_epg) == "oob" ? lookup(local.node_policies, "oob_endpoint_group", local.defaults.apic.node_policies.oob_endpoint_group) : lookup(local.node_policies, "inb_endpoint_group", local.defaults.apic.node_policies.inb_endpoint_group)
   }]
+  vswitch_enhanced_lags = [for vel in lookup(each.value, "vswitch_enhanced_lags", []) : {
+    name      = vel.name
+    lb_mode   = lookup(vel, "lb_mode", local.defaults.apic.fabric_policies.vmware_vmm_domains.vswitch_enhanced_lags.lb_mode)
+    mode      = lookup(vel, "mode", local.defaults.apic.fabric_policies.vmware_vmm_domains.vswitch_enhanced_lags.mode)
+    num_links = lookup(vel, "num_links", local.defaults.apic.fabric_policies.vmware_vmm_domains.vswitch_enhanced_lags.num_links)
+  }]
+  uplinks = lookup(each.value, "uplinks", [])
 }
 
 module "aci_aaa" {

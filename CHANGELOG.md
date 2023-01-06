@@ -3,6 +3,7 @@
 - Add support for smart licensing
 - Fix regex validation of VMware VMM vCenter username to allow for `domain\username` format
 - Add health score evaluation policy
+- Add support for enhanced LAGs and uplink configuration for VMware VMM domains
 
 ## 0.3.4
 
