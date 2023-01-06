@@ -891,18 +891,18 @@ module "aci_fabric_span_destination_group" {
 
   for_each            = { for span in try(local.fabric_policies.span.destination_groups, []) : span.name => span if lookup(local.modules, "aci_fabric_span_destination_group", true) }
   name                = "${each.value.name}${local.defaults.apic.fabric_policies.span.destination_groups.name_suffix}"
-  description         = try(span.description, null)
-  tenant              = try(span.tenant, null)
-  application_profile = try(span.application_profile, null)
-  endpoint_group      = try(span.endpoint_group, null)
-  ip                  = try(span.ip, null)
-  source_prefix       = try(span.source_prefix, null)
-  dscp                = try(span.dscp, local.defaults.apic.fabric_policies.span.destination_groups.dscp)
-  flow_id             = try(span.flow_id, local.defaults.apic.fabric_policies.span.destination_groups.flow_id)
-  mtu                 = try(span.mtu, local.defaults.apic.fabric_policies.span.destination_groups.mtu)
-  ttl                 = try(span.ttl, local.defaults.apic.fabric_policies.span.destination_groups.ttl)
-  span_version        = try(span.span_version, local.defaults.apic.fabric_policies.span.destination_groups.span_version)
-  enforce_version     = try(span.enforce_version, local.defaults.apic.fabric_policies.span.destination_groups.enforce_version)
+  description         = try(each.value.description, null)
+  tenant              = try(each.value.tenant, null)
+  application_profile = try(each.value.application_profile, null)
+  endpoint_group      = try(each.value.endpoint_group, null)
+  ip                  = try(each.value.ip, null)
+  source_prefix       = try(each.value.source_prefix, null)
+  dscp                = try(each.value.dscp, local.defaults.apic.fabric_policies.span.destination_groups.dscp)
+  flow_id             = try(each.value.flow_id, local.defaults.apic.fabric_policies.span.destination_groups.flow_id)
+  mtu                 = try(each.value.mtu, local.defaults.apic.fabric_policies.span.destination_groups.mtu)
+  ttl                 = try(each.value.ttl, local.defaults.apic.fabric_policies.span.destination_groups.ttl)
+  span_version        = try(each.value.span_version, local.defaults.apic.fabric_policies.span.destination_groups.span_version)
+  enforce_version     = try(each.value.enforce_version, local.defaults.apic.fabric_policies.span.destination_groups.enforce_version)
 }
 
 module "aci_fabric_span_source_group" {
@@ -911,8 +911,8 @@ module "aci_fabric_span_source_group" {
 
   for_each    = { for span in try(local.fabric_policies.span.source_groups, []) : span.name => span if lookup(local.modules, "aci_fabric_span_source_group", true) }
   name        = "${each.value.name}${local.defaults.apic.fabric_policies.span.source_groups.name_suffix}"
-  description = try(span.description, null)
-  admin_state = try(span.admin_state, local.defaults.apic.fabric_policies.span.source_groups.admin_state)
+  description = try(each.value.description, null)
+  admin_state = try(each.value.admin_state, local.defaults.apic.fabric_policies.span.source_groups.admin_state)
   sources = [for s in try(local.fabric_policies.span.source_groups.sources, []) : {
     name          = "${s.name}${local.defaults.apic.fabric_policies.span.source_groups.sources.name_suffix}"
     description   = try(s.description, null)
