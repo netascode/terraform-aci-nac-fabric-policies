@@ -560,11 +560,11 @@ module "aci_vmware_vmm_domain" {
     mgmt_epg_type     = lookup(vc, "mgmt_epg", local.defaults.apic.fabric_policies.vmware_vmm_domains.vcenters.mgmt_epg)
     mgmt_epg_name     = lookup(vc, "mgmt_epg", local.defaults.apic.fabric_policies.vmware_vmm_domains.vcenters.mgmt_epg) == "oob" ? lookup(local.node_policies, "oob_endpoint_group", local.defaults.apic.node_policies.oob_endpoint_group) : lookup(local.node_policies, "inb_endpoint_group", local.defaults.apic.node_policies.inb_endpoint_group)
   }]
-  vswitch_enhanced_lags = [for vel in lookup(each.value, "vswitch_enhanced_lags", []) : {
+  vswitch_enhanced_lags = [for vel in lookup(lookup(each.value, "vswitch", {}), "enhanced_lags", []) : {
     name      = vel.name
-    lb_mode   = lookup(vel, "lb_mode", local.defaults.apic.fabric_policies.vmware_vmm_domains.vswitch_enhanced_lags.lb_mode)
-    mode      = lookup(vel, "mode", local.defaults.apic.fabric_policies.vmware_vmm_domains.vswitch_enhanced_lags.mode)
-    num_links = lookup(vel, "num_links", local.defaults.apic.fabric_policies.vmware_vmm_domains.vswitch_enhanced_lags.num_links)
+    lb_mode   = lookup(vel, "lb_mode", local.defaults.apic.fabric_policies.vmware_vmm_domains.vswitch.enhanced_lags.lb_mode)
+    mode      = lookup(vel, "mode", local.defaults.apic.fabric_policies.vmware_vmm_domains.vswitch.enhanced_lags.mode)
+    num_links = lookup(vel, "num_links", local.defaults.apic.fabric_policies.vmware_vmm_domains.vswitch.enhanced_lags.num_links)
   }]
   uplinks = lookup(each.value, "uplinks", [])
 }
@@ -913,7 +913,7 @@ module "aci_fabric_span_source_group" {
   name        = "${each.value.name}${local.defaults.apic.fabric_policies.span.source_groups.name_suffix}"
   description = try(each.value.description, "")
   admin_state = try(each.value.admin_state, local.defaults.apic.fabric_policies.span.source_groups.admin_state)
-  sources = [for s in try(local.fabric_policies.span.source_groups.sources, []) : {
+  sources = [for s in try(each.value.sources, []) : {
     name          = "${s.name}${local.defaults.apic.fabric_policies.span.source_groups.sources.name_suffix}"
     description   = try(s.description, "")
     direction     = try(s.direction, local.defaults.apic.fabric_policies.span.source_groups.sources.direction)
