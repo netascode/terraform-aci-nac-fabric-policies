@@ -907,7 +907,7 @@ module "aci_fabric_span_destination_group" {
 
 module "aci_fabric_span_source_group" {
   source  = "netascode/fabric-span-source-group/aci"
-  version = "0.1.0"
+  version = "0.1.1"
 
   for_each    = { for span in try(local.fabric_policies.span.source_groups, []) : span.name => span if lookup(local.modules, "aci_fabric_span_source_group", true) }
   name        = "${each.value.name}${local.defaults.apic.fabric_policies.span.source_groups.name_suffix}"
