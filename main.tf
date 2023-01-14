@@ -213,7 +213,7 @@ module "aci_date_time_policy" {
     hostname_ip   = server.hostname_ip
     preferred     = try(server.preferred, local.defaults.apic.fabric_policies.pod_policies.date_time_policies.ntp_servers.preferred)
     mgmt_epg_type = try(server.mgmt_epg, local.defaults.apic.fabric_policies.pod_policies.date_time_policies.ntp_servers.mgmt_epg)
-    mgmt_epg_name = try(server.mgmt_epg, local.defaults.apic.fabric_policies.pod_policies.date_time_policies.ntp_servers.mgmt_epg) == "oob" ? try(local.node_policies, "oob_endpoint_group", local.defaults.apic.node_policies.oob_endpoint_group) : try(local.node_policies, "inb_endpoint_group", local.defaults.apic.node_policies.inb_endpoint_group)
+    mgmt_epg_name = try(server.mgmt_epg, local.defaults.apic.fabric_policies.pod_policies.date_time_policies.ntp_servers.mgmt_epg) == "oob" ? try(local.node_policies.oob_endpoint_group, local.defaults.apic.node_policies.oob_endpoint_group) : try(local.node_policies.inb_endpoint_group, local.defaults.apic.node_policies.inb_endpoint_group)
     auth_key_id   = try(server.auth_key_id, null)
   }]
   ntp_keys = [for key in try(each.value.ntp_keys, []) : {
