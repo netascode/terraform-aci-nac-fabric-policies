@@ -1,22 +1,22 @@
 locals {
-  defaults           = lookup(var.model, "defaults", {})
-  modules            = lookup(var.model, "modules", {})
-  apic               = lookup(var.model, "apic", {})
-  fabric_policies    = lookup(local.apic, "fabric_policies", {})
-  pod_policies       = lookup(local.apic, "pod_policies", {})
-  node_policies      = lookup(local.apic, "node_policies", {})
-  interface_policies = lookup(local.apic, "interface_policies", {})
+  defaults           = try(var.model.defaults, {})
+  modules            = try(var.model.modules, {})
+  apic               = try(var.model.apic, {})
+  fabric_policies    = try(local.apic.fabric_policies, {})
+  pod_policies       = try(local.apic.pod_policies, {})
+  node_policies      = try(local.apic.node_policies, {})
+  interface_policies = try(local.apic.interface_policies, {})
 
   interface_types = flatten([
-    for node in lookup(local.interface_policies, "nodes", []) : [
-      for interface in lookup(node, "interfaces", []) : {
-        key     = "${node.id}/${lookup(interface, "module", local.defaults.apic.interface_policies.nodes.interfaces.module)}/${interface.port}"
-        pod_id  = try([for n in lookup(local.node_policies, "nodes", []) : lookup(n, "pod", local.defaults.apic.node_policies.nodes.pod) if n.id == node.id][0], local.defaults.apic.node_policies.nodes.pod)
+    for node in try(local.interface_policies.nodes, []) : [
+      for interface in try(node.interfaces, []) : {
+        key     = "${node.id}/${try(interface.module, local.defaults.apic.interface_policies.nodes.interfaces.module)}/${interface.port}"
+        pod_id  = try([for n in try(local.node_policies.nodes, []) : try(n.pod, local.defaults.apic.node_policies.nodes.pod) if n.id == node.id][0], local.defaults.apic.node_policies.nodes.pod)
         node_id = node.id
-        module  = lookup(interface, "module", local.defaults.apic.interface_policies.nodes.interfaces.module)
+        module  = try(interface.module, local.defaults.apic.interface_policies.nodes.interfaces.module)
         port    = interface.port
         type    = interface.type
-      } if lookup(interface, "type", null) != null
+      } if try(interface.type, null) != null
     ]
   ])
 }
@@ -25,137 +25,137 @@ module "aci_apic_connectivity_preference" {
   source  = "netascode/apic-connectivity-preference/aci"
   version = "0.1.0"
 
-  count                = lookup(local.modules, "aci_apic_connectivity_preference", true) == false ? 0 : 1
-  interface_preference = lookup(local.fabric_policies, "apic_conn_pref", local.defaults.apic.fabric_policies.apic_conn_pref)
+  count                = try(local.modules.aci_apic_connectivity_preference, true) == false ? 0 : 1
+  interface_preference = try(local.fabric_policies.apic_conn_pref, local.defaults.apic.fabric_policies.apic_conn_pref)
 }
 
 module "aci_banner" {
   source  = "netascode/banner/aci"
   version = "0.1.1"
 
-  count                   = lookup(local.modules, "aci_banner", true) == false ? 0 : 1
-  apic_gui_banner_message = lookup(lookup(local.fabric_policies, "banners", {}), "apic_gui_banner_message", "")
-  apic_gui_banner_url     = lookup(lookup(local.fabric_policies, "banners", {}), "apic_gui_banner_url", "")
-  apic_gui_alias          = lookup(lookup(local.fabric_policies, "banners", {}), "apic_gui_alias", "")
-  apic_cli_banner         = lookup(lookup(local.fabric_policies, "banners", {}), "apic_cli_banner", "")
-  switch_cli_banner       = lookup(lookup(local.fabric_policies, "banners", {}), "switch_cli_banner", "")
+  count                   = try(local.modules.aci_banner, true) == false ? 0 : 1
+  apic_gui_banner_message = try(local.fabric_policies.banners.apic_gui_banner_message, "")
+  apic_gui_banner_url     = try(local.fabric_policies.banners.apic_gui_banner_url, "")
+  apic_gui_alias          = try(local.fabric_policies.banners.apic_gui_alias, "")
+  apic_cli_banner         = try(local.fabric_policies.banners.apic_cli_banner, "")
+  switch_cli_banner       = try(local.fabric_policies.banners.switch_cli_banner, "")
 }
 
 module "aci_endpoint_loop_protection" {
   source  = "netascode/endpoint-loop-protection/aci"
   version = "0.1.0"
 
-  count                = lookup(local.modules, "aci_endpoint_loop_protection", true) == false ? 0 : 1
-  action               = lookup(lookup(local.fabric_policies, "ep_loop_protection", {}), "action", local.defaults.apic.fabric_policies.ep_loop_protection.action)
-  admin_state          = lookup(lookup(local.fabric_policies, "ep_loop_protection", {}), "admin_state", local.defaults.apic.fabric_policies.ep_loop_protection.admin_state)
-  detection_interval   = lookup(lookup(local.fabric_policies, "ep_loop_protection", {}), "detection_interval", local.defaults.apic.fabric_policies.ep_loop_protection.detection_interval)
-  detection_multiplier = lookup(lookup(local.fabric_policies, "ep_loop_protection", {}), "detection_multiplier", local.defaults.apic.fabric_policies.ep_loop_protection.detection_multiplier)
+  count                = try(local.modules.aci_endpoint_loop_protection, true) == false ? 0 : 1
+  action               = try(local.fabric_policies.ep_loop_protection.action, local.defaults.apic.fabric_policies.ep_loop_protection.action)
+  admin_state          = try(local.fabric_policies.ep_loop_protection.admin_state, local.defaults.apic.fabric_policies.ep_loop_protection.admin_state)
+  detection_interval   = try(local.fabric_policies.ep_loop_protection.detection_interval, local.defaults.apic.fabric_policies.ep_loop_protection.detection_interval)
+  detection_multiplier = try(local.fabric_policies.ep_loop_protection.detection_multiplier, local.defaults.apic.fabric_policies.ep_loop_protection.detection_multiplier)
 }
 
 module "aci_rogue_endpoint_control" {
   source  = "netascode/rogue-endpoint-control/aci"
   version = "0.1.0"
 
-  count                = lookup(local.modules, "aci_rogue_endpoint_control", true) == false ? 0 : 1
-  admin_state          = lookup(lookup(local.fabric_policies, "rogue_ep_control", {}), "admin_state", local.defaults.apic.fabric_policies.rogue_ep_control.admin_state)
-  hold_interval        = lookup(lookup(local.fabric_policies, "rogue_ep_control", {}), "hold_interval", local.defaults.apic.fabric_policies.rogue_ep_control.hold_interval)
-  detection_interval   = lookup(lookup(local.fabric_policies, "rogue_ep_control", {}), "detection_interval", local.defaults.apic.fabric_policies.rogue_ep_control.detection_interval)
-  detection_multiplier = lookup(lookup(local.fabric_policies, "rogue_ep_control", {}), "detection_multiplier", local.defaults.apic.fabric_policies.rogue_ep_control.detection_multiplier)
+  count                = try(local.modules.aci_rogue_endpoint_control, true) == false ? 0 : 1
+  admin_state          = try(local.fabric_policies.rogue_ep_control.admin_state, local.defaults.apic.fabric_policies.rogue_ep_control.admin_state)
+  hold_interval        = try(local.fabric_policies.rogue_ep_control.hold_interval, local.defaults.apic.fabric_policies.rogue_ep_control.hold_interval)
+  detection_interval   = try(local.fabric_policies.rogue_ep_control.detection_interval, local.defaults.apic.fabric_policies.rogue_ep_control.detection_interval)
+  detection_multiplier = try(local.fabric_policies.rogue_ep_control.detection_multiplier, local.defaults.apic.fabric_policies.rogue_ep_control.detection_multiplier)
 }
 
 module "aci_fabric_wide_settings" {
   source  = "netascode/fabric-wide-settings/aci"
   version = "0.1.1"
 
-  count                         = lookup(local.modules, "aci_fabric_wide_settings", true) == false ? 0 : 1
-  domain_validation             = lookup(lookup(local.fabric_policies, "global_settings", {}), "domain_validation", local.defaults.apic.fabric_policies.global_settings.domain_validation)
-  enforce_subnet_check          = lookup(lookup(local.fabric_policies, "global_settings", {}), "enforce_subnet_check", local.defaults.apic.fabric_policies.global_settings.enforce_subnet_check)
-  opflex_authentication         = lookup(lookup(local.fabric_policies, "global_settings", {}), "opflex_authentication", local.defaults.apic.fabric_policies.global_settings.opflex_authentication)
-  disable_remote_endpoint_learn = lookup(lookup(local.fabric_policies, "global_settings", {}), "disable_remote_endpoint_learn", local.defaults.apic.fabric_policies.global_settings.disable_remote_endpoint_learn)
-  overlapping_vlan_validation   = lookup(lookup(local.fabric_policies, "global_settings", {}), "overlapping_vlan_validation", local.defaults.apic.fabric_policies.global_settings.overlapping_vlan_validation)
-  remote_leaf_direct            = lookup(lookup(local.fabric_policies, "global_settings", {}), "remote_leaf_direct", local.defaults.apic.fabric_policies.global_settings.remote_leaf_direct)
-  reallocate_gipo               = lookup(lookup(local.fabric_policies, "global_settings", {}), "reallocate_gipo", local.defaults.apic.fabric_policies.global_settings.reallocate_gipo)
+  count                         = try(local.modules.aci_fabric_wide_settings, true) == false ? 0 : 1
+  domain_validation             = try(local.fabric_policies.global_settings.domain_validation, local.defaults.apic.fabric_policies.global_settings.domain_validation)
+  enforce_subnet_check          = try(local.fabric_policies.global_settings.enforce_subnet_check, local.defaults.apic.fabric_policies.global_settings.enforce_subnet_check)
+  opflex_authentication         = try(local.fabric_policies.global_settings.opflex_authentication, local.defaults.apic.fabric_policies.global_settings.opflex_authentication)
+  disable_remote_endpoint_learn = try(local.fabric_policies.global_settings.disable_remote_endpoint_learn, local.defaults.apic.fabric_policies.global_settings.disable_remote_endpoint_learn)
+  overlapping_vlan_validation   = try(local.fabric_policies.global_settings.overlapping_vlan_validation, local.defaults.apic.fabric_policies.global_settings.overlapping_vlan_validation)
+  remote_leaf_direct            = try(local.fabric_policies.global_settings.remote_leaf_direct, local.defaults.apic.fabric_policies.global_settings.remote_leaf_direct)
+  reallocate_gipo               = try(local.fabric_policies.global_settings.reallocate_gipo, local.defaults.apic.fabric_policies.global_settings.reallocate_gipo)
 }
 
 module "aci_port_tracking" {
   source  = "netascode/port-tracking/aci"
   version = "0.1.0"
 
-  count       = lookup(local.modules, "aci_port_tracking", true) == false ? 0 : 1
-  admin_state = lookup(lookup(local.fabric_policies, "port_tracking", {}), "admin_state", local.defaults.apic.fabric_policies.port_tracking.admin_state)
-  delay       = lookup(lookup(local.fabric_policies, "port_tracking", {}), "delay", local.defaults.apic.fabric_policies.port_tracking.delay)
-  min_links   = lookup(lookup(local.fabric_policies, "port_tracking", {}), "min_links", local.defaults.apic.fabric_policies.port_tracking.min_links)
+  count       = try(local.modules.aci_port_tracking, true) == false ? 0 : 1
+  admin_state = try(local.fabric_policies.port_tracking.admin_state, local.defaults.apic.fabric_policies.port_tracking.admin_state)
+  delay       = try(local.fabric_policies.port_tracking.delay, local.defaults.apic.fabric_policies.port_tracking.delay)
+  min_links   = try(local.fabric_policies.port_tracking.min_links, local.defaults.apic.fabric_policies.port_tracking.min_links)
 }
 
 module "aci_ptp" {
   source  = "netascode/ptp/aci"
   version = "0.1.0"
 
-  count       = lookup(local.modules, "aci_ptp", true) == false ? 0 : 1
-  admin_state = lookup(local.fabric_policies, "ptp_admin_state", local.defaults.apic.fabric_policies.ptp_admin_state)
+  count       = try(local.modules.aci_ptp, true) == false ? 0 : 1
+  admin_state = try(local.fabric_policies.ptp_admin_state, local.defaults.apic.fabric_policies.ptp_admin_state)
 }
 
 module "aci_ip_aging" {
   source  = "netascode/ip-aging/aci"
   version = "0.1.0"
 
-  count       = lookup(local.modules, "aci_ip_aging", true) == false ? 0 : 1
-  admin_state = lookup(local.fabric_policies, "ip_aging", local.defaults.apic.fabric_policies.ip_aging)
+  count       = try(local.modules.aci_ip_aging, true) == false ? 0 : 1
+  admin_state = try(local.fabric_policies.ip_aging, local.defaults.apic.fabric_policies.ip_aging)
 }
 
 module "aci_system_global_gipo" {
   source  = "netascode/system-global-gipo/aci"
   version = "0.1.0"
 
-  count          = lookup(local.modules, "aci_system_global_gipo", true) == false ? 0 : 1
-  use_infra_gipo = lookup(local.fabric_policies, "use_infra_gipo", local.defaults.apic.fabric_policies.use_infra_gipo)
+  count          = try(local.modules.aci_system_global_gipo, true) == false ? 0 : 1
+  use_infra_gipo = try(local.fabric_policies.use_infra_gipo, local.defaults.apic.fabric_policies.use_infra_gipo)
 }
 
 module "aci_coop_policy" {
   source  = "netascode/coop-policy/aci"
   version = "0.1.0"
 
-  count             = lookup(local.modules, "aci_coop_policy", true) == false ? 0 : 1
-  coop_group_policy = lookup(local.fabric_policies, "coop_group_policy", local.defaults.apic.fabric_policies.coop_group_policy)
+  count             = try(local.modules.aci_coop_policy, true) == false ? 0 : 1
+  coop_group_policy = try(local.fabric_policies.coop_group_policy, local.defaults.apic.fabric_policies.coop_group_policy)
 }
 
 module "aci_fabric_isis_policy" {
   source  = "netascode/fabric-isis-policy/aci"
   version = "0.1.0"
 
-  count               = lookup(local.modules, "aci_fabric_isis_policy", true) == false ? 0 : 1
-  redistribute_metric = lookup(local.fabric_policies, "fabric_isis_redistribute_metric", local.defaults.apic.fabric_policies.fabric_isis_redistribute_metric)
+  count               = try(local.modules.aci_fabric_isis_policy, true) == false ? 0 : 1
+  redistribute_metric = try(local.fabric_policies.fabric_isis_redistribute_metric, local.defaults.apic.fabric_policies.fabric_isis_redistribute_metric)
 }
 
 module "aci_fabric_isis_bfd" {
   source  = "netascode/fabric-isis-bfd/aci"
   version = "0.1.0"
 
-  count       = lookup(local.modules, "aci_fabric_isis_bfd", true) == false ? 0 : 1
-  admin_state = lookup(local.fabric_policies, "fabric_isis_bfd", local.defaults.apic.fabric_policies.fabric_isis_bfd)
+  count       = try(local.modules.aci_fabric_isis_bfd, true) == false ? 0 : 1
+  admin_state = try(local.fabric_policies.fabric_isis_bfd, local.defaults.apic.fabric_policies.fabric_isis_bfd)
 }
 
 module "aci_fabric_l2_mtu" {
   source  = "netascode/fabric-l2-mtu/aci"
   version = "0.1.0"
 
-  count       = lookup(local.modules, "aci_fabric_l2_mtu", true) == false ? 0 : 1
-  l2_port_mtu = lookup(local.fabric_policies, "l2_port_mtu", local.defaults.apic.fabric_policies.l2_port_mtu)
+  count       = try(local.modules.aci_fabric_l2_mtu, true) == false ? 0 : 1
+  l2_port_mtu = try(local.fabric_policies.l2_port_mtu, local.defaults.apic.fabric_policies.l2_port_mtu)
 }
 
 module "aci_bgp_policy" {
   source  = "netascode/bgp-policy/aci"
   version = "0.2.0"
 
-  count         = lookup(local.fabric_policies, "fabric_bgp_as", null) != null && lookup(local.modules, "aci_bgp_policy", true) ? 1 : 0
-  fabric_bgp_as = lookup(local.fabric_policies, "fabric_bgp_as", null)
-  fabric_bgp_rr = [for rr in lookup(local.fabric_policies, "fabric_bgp_rr", []) : {
+  count         = try(local.fabric_policies.fabric_bgp_as, null) != null && try(local.modules.aci_bgp_policy, true) ? 1 : 0
+  fabric_bgp_as = try(local.fabric_policies.fabric_bgp_as, null)
+  fabric_bgp_rr = [for rr in try(local.fabric_policies.fabric_bgp_rr, []) : {
     node_id = rr
-    pod_id  = try([for node in lookup(local.node_policies, "nodes", []) : lookup(node, "pod", local.defaults.apic.fabric_policies.fabric_bgp_rr.pod_id) if node.id == rr][0], local.defaults.apic.node_policies.nodes.pod)
+    pod_id  = try([for node in local.node_policies.nodes : try(node.pod, local.defaults.apic.fabric_policies.fabric_bgp_rr.pod_id) if node.id == rr][0], local.defaults.apic.node_policies.nodes.pod)
   }]
-  fabric_bgp_external_rr = [for rr in lookup(local.fabric_policies, "fabric_bgp_ext_rr", []) : {
+  fabric_bgp_external_rr = [for rr in try(local.fabric_policies.fabric_bgp_ext_rr, []) : {
     node_id = rr
-    pod_id  = try([for node in lookup(local.node_policies, "nodes", []) : lookup(node, "pod", local.defaults.apic.fabric_policies.fabric_bgp_ext_rr.pod_id) if node.id == rr][0], local.defaults.apic.node_policies.nodes.pod)
+    pod_id  = try([for node in local.node_policies.nodes : try(node.pod, local.defaults.apic.fabric_policies.fabric_bgp_ext_rr.pod_id) if node.id == rr][0], local.defaults.apic.node_policies.nodes.pod)
   }]
 }
 
@@ -163,27 +163,27 @@ module "aci_date_time_format" {
   source  = "netascode/date-time-format/aci"
   version = "0.1.0"
 
-  count          = lookup(local.modules, "aci_data_time_format", true) == false ? 0 : 1
-  display_format = lookup(lookup(local.fabric_policies, "date_time_format", {}), "display_format", local.defaults.apic.fabric_policies.date_time_format.display_format)
-  timezone       = lookup(lookup(local.fabric_policies, "date_time_format", {}), "timezone", local.defaults.apic.fabric_policies.date_time_format.timezone)
-  show_offset    = lookup(lookup(local.fabric_policies, "date_time_format", {}), "show_offset", local.defaults.apic.fabric_policies.date_time_format.show_offset)
+  count          = try(local.modules.aci_data_time_format, true) == false ? 0 : 1
+  display_format = try(local.fabric_policies.date_time_format.display_format, local.defaults.apic.fabric_policies.date_time_format.display_format)
+  timezone       = try(local.fabric_policies.date_time_format.timezone, local.defaults.apic.fabric_policies.date_time_format.timezone)
+  show_offset    = try(local.fabric_policies.date_time_format.show_offset, local.defaults.apic.fabric_policies.date_time_format.show_offset)
 }
 
 module "aci_dns_policy" {
   source  = "netascode/dns-policy/aci"
   version = "0.2.0"
 
-  for_each      = { for policy in lookup(local.fabric_policies, "dns_policies", []) : policy.name => policy if lookup(local.modules, "aci_dns_policy", true) }
+  for_each      = { for policy in try(local.fabric_policies.dns_policies, []) : policy.name => policy if try(local.modules.aci_dns_policy, true) }
   name          = "${each.value.name}${local.defaults.apic.fabric_policies.dns_policies.name_suffix}"
-  mgmt_epg_type = lookup(each.value, "mgmt_epg", local.defaults.apic.fabric_policies.dns_policies.mgmt_epg)
-  mgmt_epg_name = lookup(each.value, "mgmt_epg", local.defaults.apic.fabric_policies.dns_policies.mgmt_epg) == "oob" ? lookup(local.node_policies, "oob_endpoint_group", local.defaults.apic.node_policies.oob_endpoint_group) : lookup(local.node_policies, "inb_endpoint_group", local.defaults.apic.node_policies.inb_endpoint_group)
-  providers_ = [for prov in lookup(each.value, "providers", []) : {
+  mgmt_epg_type = try(each.value.mgmt_epg, local.defaults.apic.fabric_policies.dns_policies.mgmt_epg)
+  mgmt_epg_name = try(each.value.mgmt_epg, local.defaults.apic.fabric_policies.dns_policies.mgmt_epg) == "oob" ? try(local.node_policies.oob_endpoint_group, local.defaults.apic.node_policies.oob_endpoint_group) : try(local.node_policies.inb_endpoint_group, local.defaults.apic.node_policies.inb_endpoint_group)
+  providers_ = [for prov in try(each.value.providers, []) : {
     ip        = prov.ip
-    preferred = lookup(prov, "preferred", local.defaults.apic.fabric_policies.dns_policies.providers.preferred)
+    preferred = try(prov.preferred, local.defaults.apic.fabric_policies.dns_policies.providers.preferred)
   }]
-  domains = [for dom in lookup(each.value, "domains", []) : {
+  domains = [for dom in try(each.value.domains, []) : {
     name    = dom.name
-    default = lookup(dom, "default", local.defaults.apic.fabric_policies.dns_policies.domains.default)
+    default = try(dom.default, local.defaults.apic.fabric_policies.dns_policies.domains.default)
   }]
 }
 
@@ -191,32 +191,32 @@ module "aci_error_disabled_recovery" {
   source  = "netascode/error-disabled-recovery/aci"
   version = "0.1.0"
 
-  count      = lookup(local.modules, "aci_error_disabled_recovery", true) == false ? 0 : 1
-  interval   = lookup(lookup(local.fabric_policies, "err_disabled_recovery", {}), "interval", local.defaults.apic.fabric_policies.err_disabled_recovery.interval)
-  mcp_loop   = lookup(lookup(local.fabric_policies, "err_disabled_recovery", {}), "mcp_loop", local.defaults.apic.fabric_policies.err_disabled_recovery.mcp_loop)
-  ep_move    = lookup(lookup(local.fabric_policies, "err_disabled_recovery", {}), "ep_move", local.defaults.apic.fabric_policies.err_disabled_recovery.ep_move)
-  bpdu_guard = lookup(lookup(local.fabric_policies, "err_disabled_recovery", {}), "bpdu_guard", local.defaults.apic.fabric_policies.err_disabled_recovery.bpdu_guard)
+  count      = try(local.modules.aci_error_disabled_recovery, true) == false ? 0 : 1
+  interval   = try(local.fabric_policies.err_disabled_recovery.interval, local.defaults.apic.fabric_policies.err_disabled_recovery.interval)
+  mcp_loop   = try(local.fabric_policies.err_disabled_recovery.mcp_loop, local.defaults.apic.fabric_policies.err_disabled_recovery.mcp_loop)
+  ep_move    = try(local.fabric_policies.err_disabled_recovery.ep_move, local.defaults.apic.fabric_policies.err_disabled_recovery.ep_move)
+  bpdu_guard = try(local.fabric_policies.err_disabled_recovery.bpdu_guard, local.defaults.apic.fabric_policies.err_disabled_recovery.bpdu_guard)
 }
 
 module "aci_date_time_policy" {
   source  = "netascode/date-time-policy/aci"
   version = "0.2.0"
 
-  for_each                       = { for policy in lookup(lookup(local.fabric_policies, "pod_policies", {}), "date_time_policies", []) : policy.name => policy if lookup(local.modules, "aci_date_time_policy", true) }
+  for_each                       = { for policy in try(local.fabric_policies.pod_policies.date_time_policies, []) : policy.name => policy if try(local.modules.aci_date_time_policy, true) }
   name                           = "${each.value.name}${local.defaults.apic.fabric_policies.pod_policies.date_time_policies.name_suffix}"
-  apic_ntp_server_master_stratum = lookup(each.value, "apic_ntp_server_master_stratum", local.defaults.apic.fabric_policies.pod_policies.date_time_policies.apic_ntp_server_master_stratum)
-  ntp_admin_state                = lookup(each.value, "ntp_admin_state", local.defaults.apic.fabric_policies.pod_policies.date_time_policies.ntp_admin_state)
-  ntp_auth_state                 = lookup(each.value, "ntp_auth_state", local.defaults.apic.fabric_policies.pod_policies.date_time_policies.ntp_auth_state)
-  apic_ntp_server_master_mode    = lookup(each.value, "apic_ntp_server_master_mode", local.defaults.apic.fabric_policies.pod_policies.date_time_policies.apic_ntp_server_master_mode)
-  apic_ntp_server_state          = lookup(each.value, "apic_ntp_server_state", local.defaults.apic.fabric_policies.pod_policies.date_time_policies.apic_ntp_server_state)
-  ntp_servers = [for server in lookup(each.value, "ntp_servers", []) : {
+  apic_ntp_server_master_stratum = try(each.value, "apic_ntp_server_master_stratum", local.defaults.apic.fabric_policies.pod_policies.date_time_policies.apic_ntp_server_master_stratum)
+  ntp_admin_state                = try(each.value, "ntp_admin_state", local.defaults.apic.fabric_policies.pod_policies.date_time_policies.ntp_admin_state)
+  ntp_auth_state                 = try(each.value, "ntp_auth_state", local.defaults.apic.fabric_policies.pod_policies.date_time_policies.ntp_auth_state)
+  apic_ntp_server_master_mode    = try(each.value, "apic_ntp_server_master_mode", local.defaults.apic.fabric_policies.pod_policies.date_time_policies.apic_ntp_server_master_mode)
+  apic_ntp_server_state          = try(each.value, "apic_ntp_server_state", local.defaults.apic.fabric_policies.pod_policies.date_time_policies.apic_ntp_server_state)
+  ntp_servers = [for server in try(each.value, "ntp_servers", []) : {
     hostname_ip   = server.hostname_ip
-    preferred     = lookup(server, "preferred", local.defaults.apic.fabric_policies.pod_policies.date_time_policies.ntp_servers.preferred)
-    mgmt_epg_type = lookup(server, "mgmt_epg", local.defaults.apic.fabric_policies.pod_policies.date_time_policies.ntp_servers.mgmt_epg)
-    mgmt_epg_name = lookup(server, "mgmt_epg", local.defaults.apic.fabric_policies.pod_policies.date_time_policies.ntp_servers.mgmt_epg) == "oob" ? lookup(local.node_policies, "oob_endpoint_group", local.defaults.apic.node_policies.oob_endpoint_group) : lookup(local.node_policies, "inb_endpoint_group", local.defaults.apic.node_policies.inb_endpoint_group)
-    auth_key_id   = lookup(server, "auth_key_id", null)
+    preferred     = try(server, "preferred", local.defaults.apic.fabric_policies.pod_policies.date_time_policies.ntp_servers.preferred)
+    mgmt_epg_type = try(server, "mgmt_epg", local.defaults.apic.fabric_policies.pod_policies.date_time_policies.ntp_servers.mgmt_epg)
+    mgmt_epg_name = try(server, "mgmt_epg", local.defaults.apic.fabric_policies.pod_policies.date_time_policies.ntp_servers.mgmt_epg) == "oob" ? try(local.node_policies, "oob_endpoint_group", local.defaults.apic.node_policies.oob_endpoint_group) : try(local.node_policies, "inb_endpoint_group", local.defaults.apic.node_policies.inb_endpoint_group)
+    auth_key_id   = try(server, "auth_key_id", null)
   }]
-  ntp_keys = [for key in lookup(each.value, "ntp_keys", []) : {
+  ntp_keys = [for key in try(each.value, "ntp_keys", []) : {
     id        = key.id
     key       = key.key
     auth_type = key.auth_type
@@ -228,28 +228,28 @@ module "aci_snmp_policy" {
   source  = "netascode/snmp-policy/aci"
   version = "0.2.1"
 
-  for_each    = { for policy in lookup(lookup(local.fabric_policies, "pod_policies", {}), "snmp_policies", []) : policy.name => policy if lookup(local.modules, "aci_snmp_policy", true) }
+  for_each    = { for policy in try(local.fabric_policies.pod_policies.snmp_policies, []) : policy.name => policy if try(local.modules.aci_snmp_policy, true) }
   name        = "${each.value.name}${local.defaults.apic.fabric_policies.pod_policies.snmp_policies.name_suffix}"
-  admin_state = lookup(each.value, "admin_state", local.defaults.apic.fabric_policies.pod_policies.snmp_policies.admin_state)
-  location    = lookup(each.value, "location", local.defaults.apic.fabric_policies.pod_policies.snmp_policies.location)
-  contact     = lookup(each.value, "contact", local.defaults.apic.fabric_policies.pod_policies.snmp_policies.contact)
-  communities = lookup(each.value, "communities", [])
-  users = [for user in lookup(each.value, "users", []) : {
+  admin_state = try(each.value.admin_state, local.defaults.apic.fabric_policies.pod_policies.snmp_policies.admin_state)
+  location    = try(each.value.location, local.defaults.apic.fabric_policies.pod_policies.snmp_policies.location)
+  contact     = try(each.value.contact, local.defaults.apic.fabric_policies.pod_policies.snmp_policies.contact)
+  communities = try(each.value.communities, [])
+  users = [for user in try(each.value.users, []) : {
     name               = user.name
-    privacy_type       = lookup(user, "privacy_type", local.defaults.apic.fabric_policies.pod_policies.snmp_policies.users.privacy_type)
-    privacy_key        = lookup(user, "privacy_key", "")
-    authorization_type = lookup(user, "authorization_type", local.defaults.apic.fabric_policies.pod_policies.snmp_policies.users.authorization_type)
-    authorization_key  = lookup(user, "authorization_key", "")
+    privacy_type       = try(user.privacy_type, local.defaults.apic.fabric_policies.pod_policies.snmp_policies.users.privacy_type)
+    privacy_key        = try(user.privacy_key, "")
+    authorization_type = try(user.authorization_type, local.defaults.apic.fabric_policies.pod_policies.snmp_policies.users.authorization_type)
+    authorization_key  = try(user.authorization_key, "")
   }]
-  trap_forwarders = [for trap in lookup(each.value, "trap_forwarders", []) : {
+  trap_forwarders = [for trap in try(each.value.trap_forwarders, []) : {
     ip   = trap.ip
-    port = lookup(trap, "port", local.defaults.apic.fabric_policies.pod_policies.snmp_policies.trap_forwarders.port)
+    port = try(trap.port, local.defaults.apic.fabric_policies.pod_policies.snmp_policies.trap_forwarders.port)
   }]
-  clients = [for client in lookup(each.value, "clients", []) : {
+  clients = [for client in try(each.value.clients, []) : {
     name          = "${client.name}${local.defaults.apic.fabric_policies.pod_policies.snmp_policies.clients.name_suffix}"
     mgmt_epg_type = client.mgmt_epg
-    mgmt_epg_name = client.mgmt_epg == "oob" ? lookup(local.node_policies, "oob_endpoint_group", local.defaults.apic.node_policies.oob_endpoint_group) : lookup(local.node_policies, "inb_endpoint_group", local.defaults.apic.node_policies.inb_endpoint_group)
-    entries = [for entry in lookup(client, "entries", []) : {
+    mgmt_epg_name = client.mgmt_epg == "oob" ? try(local.node_policies.oob_endpoint_group, local.defaults.apic.node_policies.oob_endpoint_group) : try(local.node_policies.inb_endpoint_group, local.defaults.apic.node_policies.inb_endpoint_group)
+    entries = [for entry in try(client.entries, []) : {
       ip   = entry.ip
       name = entry.name
     }]
@@ -260,11 +260,11 @@ module "aci_fabric_pod_policy_group" {
   source  = "netascode/fabric-pod-policy-group/aci"
   version = "0.1.1"
 
-  for_each                 = { for pg in lookup(local.fabric_policies, "pod_policy_groups", []) : pg.name => pg if lookup(local.modules, "aci_fabric_pod_policy_group", true) }
+  for_each                 = { for pg in try(local.fabric_policies.pod_policy_groups, []) : pg.name => pg if try(local.modules.aci_fabric_pod_policy_group, true) }
   name                     = "${each.value.name}${local.defaults.apic.fabric_policies.pod_policy_groups.name_suffix}"
-  snmp_policy              = lookup(each.value, "snmp_policy", null) != null ? "${each.value.snmp_policy}${local.defaults.apic.fabric_policies.pod_policies.snmp_policies.name_suffix}" : ""
-  date_time_policy         = lookup(each.value, "date_time_policy", null) != null ? "${each.value.date_time_policy}${local.defaults.apic.fabric_policies.pod_policies.date_time_policies.name_suffix}" : ""
-  management_access_policy = lookup(each.value, "management_access_policy", null) != null ? "${each.value.management_access_policy}${local.defaults.apic.fabric_policies.pod_policies.management_access_policies.name_suffix}" : ""
+  snmp_policy              = try("${each.value.snmp_policy}${local.defaults.apic.fabric_policies.pod_policies.snmp_policies.name_suffix}", "")
+  date_time_policy         = try("${each.value.date_time_policy}${local.defaults.apic.fabric_policies.pod_policies.date_time_policies.name_suffix}", "")
+  management_access_policy = try("${each.value.management_access_policy}${local.defaults.apic.fabric_policies.pod_policies.management_access_policies.name_suffix}", "")
 
   depends_on = [
     module.aci_snmp_policy,
@@ -277,11 +277,11 @@ module "aci_fabric_pod_profile_auto" {
   source  = "netascode/fabric-pod-profile/aci"
   version = "0.2.1"
 
-  for_each = { for pod in lookup(local.pod_policies, "pods", []) : pod.id => pod if(lookup(local.apic, "auto_generate_switch_pod_profiles", local.defaults.apic.auto_generate_switch_pod_profiles) || lookup(local.apic, "auto_generate_pod_profiles", local.defaults.apic.auto_generate_pod_profiles)) && lookup(local.modules, "aci_fabric_pod_profile", true) }
-  name     = replace(each.value.id, "/^(?P<id>.+)$/", replace(lookup(local.fabric_policies, "pod_profile_name", local.defaults.apic.fabric_policies.pod_profile_name), "\\g<id>", "$id"))
+  for_each = { for pod in try(local.pod_policies.pods, []) : pod.id => pod if(try(local.apic.auto_generate_switch_pod_profiles, local.defaults.apic.auto_generate_switch_pod_profiles) || try(local.apic.auto_generate_pod_profiles, local.defaults.apic.auto_generate_pod_profiles)) && try(local.modules.aci_fabric_pod_profile, true) }
+  name     = replace(each.value.id, "/^(?P<id>.+)$/", replace(try(local.fabric_policies.pod_profile_name, local.defaults.apic.fabric_policies.pod_profile_name), "\\g<id>", "$id"))
   selectors = [{
-    name         = replace(each.value.id, "/^(?P<id>.+)$/", replace(lookup(local.fabric_policies, "pod_profile_pod_selector_name", local.defaults.apic.fabric_policies.pod_profile_pod_selector_name), "\\g<id>", "$id"))
-    policy_group = lookup(each.value, "policy", null) != null ? "${each.value.policy}${local.defaults.apic.fabric_policies.pod_policy_groups.name_suffix}" : null
+    name         = replace(each.value.id, "/^(?P<id>.+)$/", replace(try(local.fabric_policies.pod_profile_pod_selector_name, local.defaults.apic.fabric_policies.pod_profile_pod_selector_name), "\\g<id>", "$id"))
+    policy_group = try("${each.value.policy}${local.defaults.apic.fabric_policies.pod_policy_groups.name_suffix}", null)
     pod_blocks = [{
       name = each.value.id
       from = each.value.id
@@ -298,16 +298,16 @@ module "aci_fabric_pod_profile_manual" {
   source  = "netascode/fabric-pod-profile/aci"
   version = "0.2.1"
 
-  for_each = { for prof in lookup(local.fabric_policies, "pod_profiles", []) : prof.name => prof if lookup(local.modules, "aci_fabric_pod_profile", true) }
+  for_each = { for prof in try(local.fabric_policies.pod_profiles, []) : prof.name => prof if try(local.modules.aci_fabric_pod_profile, true) }
   name     = "${each.value.name}${local.defaults.apic.fabric_policies.pod_profiles.name_suffix}"
-  selectors = [for selector in lookup(each.value, "selectors", []) : {
+  selectors = [for selector in try(each.value.selectors, []) : {
     name         = "${selector.name}${local.defaults.apic.fabric_policies.pod_profiles.selectors.name_suffix}"
-    policy_group = lookup(selector, "policy", null) != null ? "${selector.policy}${local.defaults.apic.fabric_policies.pod_policy_groups.name_suffix}" : null
-    type         = lookup(selector, "type", local.defaults.apic.fabric_policies.pod_profiles.selectors.type)
-    pod_blocks = [for block in lookup(selector, "pod_blocks", []) : {
+    policy_group = try("${selector.policy}${local.defaults.apic.fabric_policies.pod_policy_groups.name_suffix}", null)
+    type         = try(selector.type, local.defaults.apic.fabric_policies.pod_profiles.selectors.type)
+    pod_blocks = [for block in try(selector.pod_blocks, []) : {
       name = "${block.name}${local.defaults.apic.fabric_policies.pod_profiles.selectors.pod_blocks.name_suffix}"
       from = block.from
-      to   = lookup(block, "to", block.from)
+      to   = try(block.to, block.from)
     }]
   }]
 
@@ -320,7 +320,7 @@ module "aci_psu_policy" {
   source  = "netascode/psu-policy/aci"
   version = "0.1.0"
 
-  for_each    = { for pol in lookup(lookup(local.fabric_policies, "switch_policies", {}), "psu_policies", []) : pol.name => pol if lookup(local.modules, "aci_psu_policy", true) }
+  for_each    = { for pol in try(local.fabric_policies.switch_policies.psu_policies, []) : pol.name => pol if try(local.modules.aci_psu_policy, true) }
   name        = "${each.value.name}${local.defaults.apic.fabric_policies.switch_policies.psu_policies.name_suffix}"
   admin_state = each.value.admin_state
 }
@@ -329,20 +329,20 @@ module "aci_node_control_policy" {
   source  = "netascode/node-control-policy/aci"
   version = "0.1.0"
 
-  for_each  = { for pol in lookup(lookup(local.fabric_policies, "switch_policies", {}), "node_control_policies", []) : pol.name => pol if lookup(local.modules, "aci_node_control_policy", true) }
+  for_each  = { for pol in try(local.fabric_policies.switch_policies.node_control_policies, []) : pol.name => pol if try(local.modules.aci_node_control_policy, true) }
   name      = "${each.value.name}${local.defaults.apic.fabric_policies.switch_policies.node_control_policies.name_suffix}"
-  dom       = lookup(each.value, "dom", local.defaults.apic.fabric_policies.switch_policies.node_control_policies.dom)
-  telemetry = lookup(each.value, "telemetry", local.defaults.apic.fabric_policies.switch_policies.node_control_policies.telemetry)
+  dom       = try(each.value.dom, local.defaults.apic.fabric_policies.switch_policies.node_control_policies.dom)
+  telemetry = try(each.value.telemetry, local.defaults.apic.fabric_policies.switch_policies.node_control_policies.telemetry)
 }
 
 module "aci_fabric_leaf_switch_policy_group" {
   source  = "netascode/fabric-leaf-switch-policy-group/aci"
   version = "0.1.0"
 
-  for_each            = { for pg in lookup(local.fabric_policies, "leaf_switch_policy_groups", []) : pg.name => pg if lookup(local.modules, "aci_fabric_leaf_switch_policy_group", true) }
+  for_each            = { for pg in try(local.fabric_policies.leaf_switch_policy_groups, []) : pg.name => pg if try(local.modules.aci_fabric_leaf_switch_policy_group, true) }
   name                = "${each.value.name}${local.defaults.apic.fabric_policies.leaf_switch_policy_groups.name_suffix}"
-  psu_policy          = lookup(each.value, "psu_policy", null) != null ? "${each.value.psu_policy}${local.defaults.apic.fabric_policies.switch_policies.psu_policies.name_suffix}" : ""
-  node_control_policy = lookup(each.value, "node_control_policy", null) != null ? "${each.value.node_control_policy}${local.defaults.apic.fabric_policies.switch_policies.node_control_policies.name_suffix}" : ""
+  psu_policy          = try("${each.value.psu_policy}${local.defaults.apic.fabric_policies.switch_policies.psu_policies.name_suffix}", "")
+  node_control_policy = try("${each.value.node_control_policy}${local.defaults.apic.fabric_policies.switch_policies.node_control_policies.name_suffix}", "")
 
   depends_on = [
     module.aci_psu_policy,
@@ -354,10 +354,10 @@ module "aci_fabric_spine_switch_policy_group" {
   source  = "netascode/fabric-spine-switch-policy-group/aci"
   version = "0.1.0"
 
-  for_each            = { for pg in lookup(local.fabric_policies, "spine_switch_policy_groups", []) : pg.name => pg if lookup(local.modules, "aci_fabric_spine_switch_policy_group", true) }
+  for_each            = { for pg in try(local.fabric_policies.spine_switch_policy_groups, []) : pg.name => pg if try(local.modules.aci_fabric_spine_switch_policy_group, true) }
   name                = "${each.value.name}${local.defaults.apic.fabric_policies.spine_switch_policy_groups.name_suffix}"
-  psu_policy          = lookup(each.value, "psu_policy", null) != null ? "${each.value.psu_policy}${local.defaults.apic.fabric_policies.switch_policies.psu_policies.name_suffix}" : ""
-  node_control_policy = lookup(each.value, "node_control_policy", null) != null ? "${each.value.node_control_policy}${local.defaults.apic.fabric_policies.switch_policies.node_control_policies.name_suffix}" : ""
+  psu_policy          = try("${each.value.psu_policy}${local.defaults.apic.fabric_policies.switch_policies.psu_policies.name_suffix}", "")
+  node_control_policy = try("${each.value.node_control_policy}${local.defaults.apic.fabric_policies.switch_policies.node_control_policies.name_suffix}", "")
 
   depends_on = [
     module.aci_psu_policy,
@@ -369,12 +369,12 @@ module "aci_fabric_leaf_switch_profile_auto" {
   source  = "netascode/fabric-leaf-switch-profile/aci"
   version = "0.2.0"
 
-  for_each           = { for node in lookup(local.node_policies, "nodes", []) : node.id => node if node.role == "leaf" && (lookup(local.apic, "auto_generate_switch_pod_profiles", local.defaults.apic.auto_generate_switch_pod_profiles) || lookup(local.apic, "auto_generate_fabric_leaf_switch_interface_profiles", local.defaults.apic.auto_generate_fabric_leaf_switch_interface_profiles)) && lookup(local.modules, "aci_fabric_leaf_switch_profile", true) }
-  name               = replace("${each.value.id}:${each.value.name}", "/^(?P<id>.+):(?P<name>.+)$/", replace(replace(lookup(local.fabric_policies, "leaf_switch_profile_name", local.defaults.apic.fabric_policies.leaf_switch_profile_name), "\\g<id>", "$id"), "\\g<name>", "$name"))
-  interface_profiles = [replace("${each.value.id}:${each.value.name}", "/^(?P<id>.+):(?P<name>.+)$/", replace(replace(lookup(local.fabric_policies, "leaf_interface_profile_name", local.defaults.apic.fabric_policies.leaf_interface_profile_name), "\\g<id>", "$id"), "\\g<name>", "$name"))]
+  for_each           = { for node in try(local.node_policies.nodes, []) : node.id => node if node.role == "leaf" && (try(local.apic.auto_generate_switch_pod_profiles, local.defaults.apic.auto_generate_switch_pod_profiles) || try(local.apic.auto_generate_fabric_leaf_switch_interface_profiles, local.defaults.apic.auto_generate_fabric_leaf_switch_interface_profiles)) && try(local.modules.aci_fabric_leaf_switch_profile, true) }
+  name               = replace("${each.value.id}:${each.value.name}", "/^(?P<id>.+):(?P<name>.+)$/", replace(replace(try(local.fabric_policies.leaf_switch_profile_name, local.defaults.apic.fabric_policies.leaf_switch_profile_name), "\\g<id>", "$id"), "\\g<name>", "$name"))
+  interface_profiles = [replace("${each.value.id}:${each.value.name}", "/^(?P<id>.+):(?P<name>.+)$/", replace(replace(try(local.fabric_policies.leaf_interface_profile_name, local.defaults.apic.fabric_policies.leaf_interface_profile_name), "\\g<id>", "$id"), "\\g<name>", "$name"))]
   selectors = [{
-    name         = replace("${each.value.id}:${each.value.name}", "/^(?P<id>.+):(?P<name>.+)$/", replace(replace(lookup(local.fabric_policies, "leaf_switch_selector_name", local.defaults.apic.fabric_policies.leaf_switch_selector_name), "\\g<id>", "$id"), "\\g<name>", "$name"))
-    policy_group = lookup(each.value, "fabric_policy_group", null) != null ? "${each.value.fabric_policy_group}${local.defaults.apic.fabric_policies.leaf_switch_policy_groups.name_suffix}" : null
+    name         = replace("${each.value.id}:${each.value.name}", "/^(?P<id>.+):(?P<name>.+)$/", replace(replace(try(local.fabric_policies.leaf_switch_selector_name, local.defaults.apic.fabric_policies.leaf_switch_selector_name), "\\g<id>", "$id"), "\\g<name>", "$name"))
+    policy_group = try("${each.value.fabric_policy_group}${local.defaults.apic.fabric_policies.leaf_switch_policy_groups.name_suffix}", null)
     node_blocks = [{
       name = each.value.id
       from = each.value.id
@@ -393,18 +393,18 @@ module "aci_fabric_leaf_switch_profile_manual" {
   source  = "netascode/fabric-leaf-switch-profile/aci"
   version = "0.2.0"
 
-  for_each = { for prof in lookup(local.fabric_policies, "leaf_switch_profiles", []) : prof.name => prof if lookup(local.modules, "aci_fabric_leaf_switch_profile", true) }
+  for_each = { for prof in try(local.fabric_policies.leaf_switch_profiles, []) : prof.name => prof if try(local.modules.aci_fabric_leaf_switch_profile, true) }
   name     = each.value.name
-  selectors = [for selector in lookup(each.value, "selectors", []) : {
+  selectors = [for selector in try(each.value.selectors, []) : {
     name         = "${selector.name}${local.defaults.apic.fabric_policies.leaf_switch_profiles.selectors.name_suffix}"
-    policy_group = lookup(selector, "policy", null) != null ? "${selector.policy}${local.defaults.apic.fabric_policies.leaf_switch_policy_groups.name_suffix}" : null
-    node_blocks = [for block in lookup(selector, "node_blocks", []) : {
+    policy_group = try("${selector.policy}${local.defaults.apic.fabric_policies.leaf_switch_policy_groups.name_suffix}", null)
+    node_blocks = [for block in try(selector, "node_blocks", []) : {
       name = "${block.name}${local.defaults.apic.fabric_policies.leaf_switch_profiles.selectors.node_blocks.name_suffix}"
       from = block.from
-      to   = lookup(block, "to", block.from)
+      to   = try(block, "to", block.from)
     }]
   }]
-  interface_profiles = [for profile in lookup(each.value, "interface_profiles", []) : "${profile}${local.defaults.apic.fabric_policies.leaf_interface_profiles.name_suffix}"]
+  interface_profiles = [for profile in try(each.value.interface_profiles, []) : "${profile}${local.defaults.apic.fabric_policies.leaf_interface_profiles.name_suffix}"]
 
   depends_on = [
     module.aci_fabric_leaf_interface_profile_manual,
@@ -417,12 +417,12 @@ module "aci_fabric_spine_switch_profile_auto" {
   source  = "netascode/fabric-spine-switch-profile/aci"
   version = "0.2.0"
 
-  for_each           = { for node in lookup(local.node_policies, "nodes", []) : node.id => node if node.role == "spine" && (lookup(local.apic, "auto_generate_switch_pod_profiles", local.defaults.apic.auto_generate_switch_pod_profiles) || lookup(local.apic, "auto_generate_fabric_spine_switch_interface_profiles", local.defaults.apic.auto_generate_fabric_spine_switch_interface_profiles)) && lookup(local.modules, "aci_fabric_spine_switch_profile", true) }
-  name               = replace("${each.value.id}:${each.value.name}", "/^(?P<id>.+):(?P<name>.+)$/", replace(replace(lookup(local.fabric_policies, "spine_switch_profile_name", local.defaults.apic.fabric_policies.spine_switch_profile_name), "\\g<id>", "$id"), "\\g<name>", "$name"))
-  interface_profiles = [replace("${each.value.id}:${each.value.name}", "/^(?P<id>.+):(?P<name>.+)$/", replace(replace(lookup(local.fabric_policies, "spine_interface_profile_name", local.defaults.apic.fabric_policies.spine_interface_profile_name), "\\g<id>", "$id"), "\\g<name>", "$name"))]
+  for_each           = { for node in try(local.node_policies.nodes, []) : node.id => node if node.role == "spine" && (try(local.apic.auto_generate_switch_pod_profiles, local.defaults.apic.auto_generate_switch_pod_profiles) || try(local.apic.auto_generate_fabric_spine_switch_interface_profiles, local.defaults.apic.auto_generate_fabric_spine_switch_interface_profiles)) && try(local.modules.aci_fabric_spine_switch_profile, true) }
+  name               = replace("${each.value.id}:${each.value.name}", "/^(?P<id>.+):(?P<name>.+)$/", replace(replace(try(local.fabric_policies.spine_switch_profile_name, local.defaults.apic.fabric_policies.spine_switch_profile_name), "\\g<id>", "$id"), "\\g<name>", "$name"))
+  interface_profiles = [replace("${each.value.id}:${each.value.name}", "/^(?P<id>.+):(?P<name>.+)$/", replace(replace(try(local.fabric_policies.spine_interface_profile_name, local.defaults.apic.fabric_policies.spine_interface_profile_name), "\\g<id>", "$id"), "\\g<name>", "$name"))]
   selectors = [{
-    name         = replace("${each.value.id}:${each.value.name}", "/^(?P<id>.+):(?P<name>.+)$/", replace(replace(lookup(local.fabric_policies, "spine_switch_selector_name", local.defaults.apic.fabric_policies.spine_switch_selector_name), "\\g<id>", "$id"), "\\g<name>", "$name"))
-    policy_group = lookup(each.value, "fabric_policy_group", null) != null ? "${each.value.fabric_policy_group}${local.defaults.apic.fabric_policies.spine_switch_policy_groups.name_suffix}" : null
+    name         = replace("${each.value.id}:${each.value.name}", "/^(?P<id>.+):(?P<name>.+)$/", replace(replace(try(local.fabric_policies.spine_switch_selector_name, local.defaults.apic.fabric_policies.spine_switch_selector_name), "\\g<id>", "$id"), "\\g<name>", "$name"))
+    policy_group = try("${each.value.fabric_policy_group}${local.defaults.apic.fabric_policies.spine_switch_policy_groups.name_suffix}", null)
     node_blocks = [{
       name = each.value.id
       from = each.value.id
@@ -441,18 +441,18 @@ module "aci_fabric_spine_switch_profile_manual" {
   source  = "netascode/fabric-spine-switch-profile/aci"
   version = "0.2.0"
 
-  for_each = { for prof in lookup(local.fabric_policies, "spine_switch_profiles", []) : prof.name => prof if lookup(local.modules, "aci_fabric_spine_switch_profile", true) }
+  for_each = { for prof in try(local.fabric_policies.spine_switch_profiles, []) : prof.name => prof if try(local.modules.aci_fabric_spine_switch_profile, true) }
   name     = each.value.name
-  selectors = [for selector in lookup(each.value, "selectors", []) : {
+  selectors = [for selector in try(each.value.selectors, []) : {
     name         = "${selector.name}${local.defaults.apic.fabric_policies.spine_switch_profiles.selectors.name_suffix}"
-    policy_group = lookup(selector, "policy", null) != null ? "${selector.policy}${local.defaults.apic.fabric_policies.spine_switch_policy_groups.name_suffix}" : null
-    node_blocks = [for block in lookup(selector, "node_blocks", []) : {
+    policy_group = try("${selector.policy}${local.defaults.apic.fabric_policies.spine_switch_policy_groups.name_suffix}", null)
+    node_blocks = [for block in try(selector.node_blocks, []) : {
       name = "${block.name}${local.defaults.apic.fabric_policies.spine_switch_profiles.selectors.node_blocks.name_suffix}"
       from = block.from
-      to   = lookup(block, "to", block.from)
+      to   = try(block.to, block.from)
     }]
   }]
-  interface_profiles = [for profile in lookup(each.value, "interface_profiles", []) : "${profile}${local.defaults.apic.fabric_policies.spine_interface_profiles.name_suffix}"]
+  interface_profiles = [for profile in try(each.value.interface_profiles, []) : "${profile}${local.defaults.apic.fabric_policies.spine_interface_profiles.name_suffix}"]
 
   depends_on = [
     module.aci_fabric_spine_interface_profile_manual,
@@ -465,15 +465,15 @@ module "aci_fabric_leaf_interface_profile_auto" {
   source  = "netascode/fabric-leaf-interface-profile/aci"
   version = "0.1.0"
 
-  for_each = { for node in lookup(local.node_policies, "nodes", []) : node.id => node if node.role == "leaf" && (lookup(local.apic, "auto_generate_switch_pod_profiles", local.defaults.apic.auto_generate_switch_pod_profiles) || lookup(local.apic, "auto_generate_fabric_leaf_switch_interface_profiles", local.defaults.apic.auto_generate_fabric_leaf_switch_interface_profiles)) && lookup(local.modules, "aci_fabric_leaf_interface_profile", true) }
-  name     = replace("${each.value.id}:${each.value.name}", "/^(?P<id>.+):(?P<name>.+)$/", replace(replace(lookup(local.fabric_policies, "leaf_interface_profile_name", local.defaults.apic.fabric_policies.leaf_interface_profile_name), "\\g<id>", "$id"), "\\g<name>", "$name"))
+  for_each = { for node in try(local.node_policies.nodes, []) : node.id => node if node.role == "leaf" && (try(local.apic.auto_generate_switch_pod_profiles, local.defaults.apic.auto_generate_switch_pod_profiles) || try(local.apic.auto_generate_fabric_leaf_switch_interface_profiles, local.defaults.apic.auto_generate_fabric_leaf_switch_interface_profiles)) && try(local.modules.aci_fabric_leaf_interface_profile, true) }
+  name     = replace("${each.value.id}:${each.value.name}", "/^(?P<id>.+):(?P<name>.+)$/", replace(replace(try(local.fabric_policies.leaf_interface_profile_name, local.defaults.apic.fabric_policies.leaf_interface_profile_name), "\\g<id>", "$id"), "\\g<name>", "$name"))
 }
 
 module "aci_fabric_leaf_interface_profile_manual" {
   source  = "netascode/fabric-leaf-interface-profile/aci"
   version = "0.1.0"
 
-  for_each = { for prof in lookup(local.fabric_policies, "leaf_interface_profiles", []) : prof.name => prof if lookup(local.modules, "aci_fabric_leaf_interface_profile", true) }
+  for_each = { for prof in try(local.fabric_policies.leaf_interface_profiles, []) : prof.name => prof if try(local.modules.aci_fabric_leaf_interface_profile, true) }
   name     = "${each.value.name}${local.defaults.apic.fabric_policies.leaf_interface_profiles.name_suffix}"
 }
 
@@ -481,15 +481,15 @@ module "aci_fabric_spine_interface_profile_auto" {
   source  = "netascode/fabric-spine-interface-profile/aci"
   version = "0.1.0"
 
-  for_each = { for node in lookup(local.node_policies, "nodes", []) : node.id => node if node.role == "spine" && (lookup(local.apic, "auto_generate_switch_pod_profiles", local.defaults.apic.auto_generate_switch_pod_profiles) || lookup(local.apic, "auto_generate_fabric_spine_switch_interface_profiles", local.defaults.apic.auto_generate_fabric_spine_switch_interface_profiles)) && lookup(local.modules, "aci_fabric_spine_interface_profile", true) }
-  name     = replace("${each.value.id}:${each.value.name}", "/^(?P<id>.+):(?P<name>.+)$/", replace(replace(lookup(local.fabric_policies, "spine_interface_profile_name", local.defaults.apic.fabric_policies.spine_interface_profile_name), "\\g<id>", "$id"), "\\g<name>", "$name"))
+  for_each = { for node in try(local.node_policies.nodes, []) : node.id => node if node.role == "spine" && (try(local.apic.auto_generate_switch_pod_profiles, local.defaults.apic.auto_generate_switch_pod_profiles) || try(local.apic.auto_generate_fabric_spine_switch_interface_profiles, local.defaults.apic.auto_generate_fabric_spine_switch_interface_profiles)) && try(local.modules.aci_fabric_spine_interface_profile, true) }
+  name     = replace("${each.value.id}:${each.value.name}", "/^(?P<id>.+):(?P<name>.+)$/", replace(replace(try(local.fabric_policies.spine_interface_profile_name, local.defaults.apic.fabric_policies.spine_interface_profile_name), "\\g<id>", "$id"), "\\g<name>", "$name"))
 }
 
 module "aci_fabric_spine_interface_profile_manual" {
   source  = "netascode/fabric-spine-interface-profile/aci"
   version = "0.1.0"
 
-  for_each = { for prof in lookup(local.fabric_policies, "spine_interface_profiles", []) : prof.name => prof if lookup(local.modules, "aci_fabric_spine_interface_profile", true) }
+  for_each = { for prof in try(local.fabric_policies.spine_interface_profiles, []) : prof.name => prof if try(local.modules.aci_fabric_spine_interface_profile, true) }
   name     = "${each.value.name}${local.defaults.apic.fabric_policies.spine_interface_profiles.name_suffix}"
 }
 
@@ -497,148 +497,148 @@ module "aci_external_connectivity_policy" {
   source  = "netascode/external-connectivity-policy/aci"
   version = "0.2.0"
 
-  count        = lookup(lookup(local.fabric_policies, "external_connectivity_policy", {}), "name", null) != null && lookup(local.modules, "aci_external_connectivity_policy", true) ? 1 : 0
+  count        = try(local.fabric_policies.external_connectivity_policy.name, null) != null && try(local.modules.aci_external_connectivity_policy, true) ? 1 : 0
   name         = "${local.fabric_policies.external_connectivity_policy.name}${local.defaults.apic.fabric_policies.external_connectivity_policy.name_suffix}"
-  route_target = lookup(lookup(local.fabric_policies, "external_connectivity_policy", {}), "route_target", local.defaults.apic.fabric_policies.external_connectivity_policy.route_target)
-  fabric_id    = lookup(lookup(local.fabric_policies, "external_connectivity_policy", {}), "fabric_id", local.defaults.apic.fabric_policies.external_connectivity_policy.fabric_id)
-  site_id      = lookup(lookup(local.fabric_policies, "external_connectivity_policy", {}), "site_id", local.defaults.apic.fabric_policies.external_connectivity_policy.site_id)
-  bgp_password = lookup(lookup(local.fabric_policies, "external_connectivity_policy", {}), "bgp_password", null)
-  routing_profiles = [for rp in lookup(lookup(local.fabric_policies, "external_connectivity_policy", {}), "routing_profiles", []) : {
+  route_target = try(local.fabric_policies.external_connectivity_policy.route_target, local.defaults.apic.fabric_policies.external_connectivity_policy.route_target)
+  fabric_id    = try(local.fabric_policies.external_connectivity_policy.fabric_id, local.defaults.apic.fabric_policies.external_connectivity_policy.fabric_id)
+  site_id      = try(local.fabric_policies.external_connectivity_policy.site_id, local.defaults.apic.fabric_policies.external_connectivity_policy.site_id)
+  bgp_password = try(local.fabric_policies.external_connectivity_policy.bgp_password, null)
+  routing_profiles = [for rp in try(local.fabric_policies.external_connectivity_policy.routing_profiles, []) : {
     name        = rp.name
-    description = lookup(rp, "description", "")
-    subnets     = lookup(rp, "subnets", [])
+    description = try(rp.description, "")
+    subnets     = try(rp.subnets, [])
   }]
-  data_plane_teps = [for pod in lookup(local.pod_policies, "pods", []) : {
+  data_plane_teps = [for pod in try(local.pod_policies.pods, []) : {
     pod_id = pod.id
-    ip     = lookup(pod, "data_plane_tep", null)
-  } if lookup(pod, "data_plane_tep", null) != null]
+    ip     = try(pod.data_plane_tep, null)
+  } if try(pod.data_plane_tep, null) != null]
 }
 
 module "aci_infra_dscp_translation_policy" {
   source  = "netascode/infra-dscp-translation-policy/aci"
   version = "0.1.0"
 
-  count         = lookup(local.modules, "aci_infra_dscp_translation_policy", true) == false ? 0 : 1
-  admin_state   = lookup(lookup(local.fabric_policies, "infra_dscp_translation_policy", {}), "admin_state", local.defaults.apic.fabric_policies.infra_dscp_translation_policy.admin_state)
-  control_plane = lookup(lookup(local.fabric_policies, "infra_dscp_translation_policy", {}), "control_plane", local.defaults.apic.fabric_policies.infra_dscp_translation_policy.control_plane)
-  level_1       = lookup(lookup(local.fabric_policies, "infra_dscp_translation_policy", {}), "level_1", local.defaults.apic.fabric_policies.infra_dscp_translation_policy.level_1)
-  level_2       = lookup(lookup(local.fabric_policies, "infra_dscp_translation_policy", {}), "level_2", local.defaults.apic.fabric_policies.infra_dscp_translation_policy.level_2)
-  level_3       = lookup(lookup(local.fabric_policies, "infra_dscp_translation_policy", {}), "level_3", local.defaults.apic.fabric_policies.infra_dscp_translation_policy.level_3)
-  level_4       = lookup(lookup(local.fabric_policies, "infra_dscp_translation_policy", {}), "level_4", local.defaults.apic.fabric_policies.infra_dscp_translation_policy.level_4)
-  level_5       = lookup(lookup(local.fabric_policies, "infra_dscp_translation_policy", {}), "level_5", local.defaults.apic.fabric_policies.infra_dscp_translation_policy.level_5)
-  level_6       = lookup(lookup(local.fabric_policies, "infra_dscp_translation_policy", {}), "level_6", local.defaults.apic.fabric_policies.infra_dscp_translation_policy.level_6)
-  policy_plane  = lookup(lookup(local.fabric_policies, "infra_dscp_translation_policy", {}), "policy_plane", local.defaults.apic.fabric_policies.infra_dscp_translation_policy.policy_plane)
-  span          = lookup(lookup(local.fabric_policies, "infra_dscp_translation_policy", {}), "span", local.defaults.apic.fabric_policies.infra_dscp_translation_policy.span)
-  traceroute    = lookup(lookup(local.fabric_policies, "infra_dscp_translation_policy", {}), "traceroute", local.defaults.apic.fabric_policies.infra_dscp_translation_policy.traceroute)
+  count         = try(local.modules.aci_infra_dscp_translation_policy, true) == false ? 0 : 1
+  admin_state   = try(local.fabric_policies.infra_dscp_translation_policy.admin_state, local.defaults.apic.fabric_policies.infra_dscp_translation_policy.admin_state)
+  control_plane = try(local.fabric_policies.infra_dscp_translation_policy.control_plane, local.defaults.apic.fabric_policies.infra_dscp_translation_policy.control_plane)
+  level_1       = try(local.fabric_policies.infra_dscp_translation_policy.level_1, local.defaults.apic.fabric_policies.infra_dscp_translation_policy.level_1)
+  level_2       = try(local.fabric_policies.infra_dscp_translation_policy.level_2, local.defaults.apic.fabric_policies.infra_dscp_translation_policy.level_2)
+  level_3       = try(local.fabric_policies.infra_dscp_translation_policy.level_3, local.defaults.apic.fabric_policies.infra_dscp_translation_policy.level_3)
+  level_4       = try(local.fabric_policies.infra_dscp_translation_policy.level_4, local.defaults.apic.fabric_policies.infra_dscp_translation_policy.level_4)
+  level_5       = try(local.fabric_policies.infra_dscp_translation_policy.level_5, local.defaults.apic.fabric_policies.infra_dscp_translation_policy.level_5)
+  level_6       = try(local.fabric_policies.infra_dscp_translation_policy.level_6, local.defaults.apic.fabric_policies.infra_dscp_translation_policy.level_6)
+  policy_plane  = try(local.fabric_policies.infra_dscp_translation_policy.policy_plane, local.defaults.apic.fabric_policies.infra_dscp_translation_policy.policy_plane)
+  span          = try(local.fabric_policies.infra_dscp_translation_policy.span, local.defaults.apic.fabric_policies.infra_dscp_translation_policy.span)
+  traceroute    = try(local.fabric_policies.infra_dscp_translation_policy.traceroute, local.defaults.apic.fabric_policies.infra_dscp_translation_policy.traceroute)
 }
 
 module "aci_vmware_vmm_domain" {
   source  = "netascode/vmware-vmm-domain/aci"
   version = "0.2.2"
 
-  for_each                    = { for vmm in lookup(local.fabric_policies, "vmware_vmm_domains", []) : vmm.name => vmm if lookup(local.modules, "aci_vmware_vmm_domain", true) }
+  for_each                    = { for vmm in try(local.fabric_policies.vmware_vmm_domains, []) : vmm.name => vmm if try(local.modules.aci_vmware_vmm_domain, true) }
   name                        = "${each.value.name}${local.defaults.apic.fabric_policies.vmware_vmm_domains.name_suffix}"
-  access_mode                 = lookup(each.value, "access_mode", local.defaults.apic.fabric_policies.vmware_vmm_domains.access_mode)
-  delimiter                   = lookup(each.value, "delimiter", local.defaults.apic.fabric_policies.vmware_vmm_domains.delimiter)
-  tag_collection              = lookup(each.value, "tag_collection", local.defaults.apic.fabric_policies.vmware_vmm_domains.tag_collection)
+  access_mode                 = try(each.value.access_mode, local.defaults.apic.fabric_policies.vmware_vmm_domains.access_mode)
+  delimiter                   = try(each.value.delimiter, local.defaults.apic.fabric_policies.vmware_vmm_domains.delimiter)
+  tag_collection              = try(each.value.tag_collection, local.defaults.apic.fabric_policies.vmware_vmm_domains.tag_collection)
   vlan_pool                   = "${each.value.vlan_pool}${local.defaults.apic.access_policies.vlan_pools.name_suffix}"
-  vswitch_cdp_policy          = lookup(lookup(each.value, "vswitch", {}), "cdp_policy", "")
-  vswitch_lldp_policy         = lookup(lookup(each.value, "vswitch", {}), "lldp_policy", "")
-  vswitch_port_channel_policy = lookup(lookup(each.value, "vswitch", {}), "port_channel_policy", "")
-  credential_policies = [for cp in lookup(each.value, "credential_policies", []) : {
+  vswitch_cdp_policy          = try(each.value.vswitch.cdp_policy, "")
+  vswitch_lldp_policy         = try(each.value.vswitch.lldp_policy, "")
+  vswitch_port_channel_policy = try(each.value.vswitch.port_channel_policy, "")
+  credential_policies = [for cp in try(each.value.credential_policies, []) : {
     name     = "${cp.name}${local.defaults.apic.fabric_policies.vmware_vmm_domains.credential_policies.name_suffix}"
     username = cp.username
     password = cp.password
   }]
-  vcenters = [for vc in lookup(each.value, "vcenters", []) : {
+  vcenters = [for vc in try(each.valuevcenters, []) : {
     name              = "${vc.name}${local.defaults.apic.fabric_policies.vmware_vmm_domains.vcenters.name_suffix}"
     hostname_ip       = vc.hostname_ip
     datacenter        = vc.datacenter
-    credential_policy = lookup(vc, "credential_policy", null) != null ? "${vc.credential_policy}${local.defaults.apic.fabric_policies.vmware_vmm_domains.credential_policies.name_suffix}" : null
-    dvs_version       = lookup(vc, "dvs_version", local.defaults.apic.fabric_policies.vmware_vmm_domains.vcenters.dvs_version)
-    statistics        = lookup(vc, "statistics", local.defaults.apic.fabric_policies.vmware_vmm_domains.vcenters.statistics)
-    mgmt_epg_type     = lookup(vc, "mgmt_epg", local.defaults.apic.fabric_policies.vmware_vmm_domains.vcenters.mgmt_epg)
-    mgmt_epg_name     = lookup(vc, "mgmt_epg", local.defaults.apic.fabric_policies.vmware_vmm_domains.vcenters.mgmt_epg) == "oob" ? lookup(local.node_policies, "oob_endpoint_group", local.defaults.apic.node_policies.oob_endpoint_group) : lookup(local.node_policies, "inb_endpoint_group", local.defaults.apic.node_policies.inb_endpoint_group)
+    credential_policy = try("${vc.credential_policy}${local.defaults.apic.fabric_policies.vmware_vmm_domains.credential_policies.name_suffix}", null)
+    dvs_version       = try(vc.dvs_version, local.defaults.apic.fabric_policies.vmware_vmm_domains.vcenters.dvs_version)
+    statistics        = try(vc.statistics, local.defaults.apic.fabric_policies.vmware_vmm_domains.vcenters.statistics)
+    mgmt_epg_type     = try(vc.mgmt_epg, local.defaults.apic.fabric_policies.vmware_vmm_domains.vcenters.mgmt_epg)
+    mgmt_epg_name     = try(vc.mgmt_epg, local.defaults.apic.fabric_policies.vmware_vmm_domains.vcenters.mgmt_epg) == "oob" ? try(local.node_policies.oob_endpoint_group, local.defaults.apic.node_policies.oob_endpoint_group) : try(local.node_policies.inb_endpoint_group, local.defaults.apic.node_policies.inb_endpoint_group)
   }]
-  vswitch_enhanced_lags = [for vel in lookup(lookup(each.value, "vswitch", {}), "enhanced_lags", []) : {
+  vswitch_enhanced_lags = [for vel in try(each.value.vswitch.enhanced_lags, []) : {
     name      = "${vel.name}${local.defaults.apic.fabric_policies.vmware_vmm_domains.vswitch.enhanced_lags.name_suffix}"
-    lb_mode   = lookup(vel, "lb_mode", local.defaults.apic.fabric_policies.vmware_vmm_domains.vswitch.enhanced_lags.lb_mode)
-    mode      = lookup(vel, "mode", local.defaults.apic.fabric_policies.vmware_vmm_domains.vswitch.enhanced_lags.mode)
-    num_links = lookup(vel, "num_links", local.defaults.apic.fabric_policies.vmware_vmm_domains.vswitch.enhanced_lags.num_links)
+    lb_mode   = try(vel.lb_mode, local.defaults.apic.fabric_policies.vmware_vmm_domains.vswitch.enhanced_lags.lb_mode)
+    mode      = try(vel.mode, local.defaults.apic.fabric_policies.vmware_vmm_domains.vswitch.enhanced_lags.mode)
+    num_links = try(vel.num_links, local.defaults.apic.fabric_policies.vmware_vmm_domains.vswitch.enhanced_lags.num_links)
   }]
-  uplinks = lookup(each.value, "uplinks", [])
+  uplinks = try(each.value.uplinks, [])
 }
 
 module "aci_aaa" {
   source  = "netascode/aaa/aci"
   version = "0.1.0"
 
-  count                    = lookup(local.modules, "aci_aaa", true) == false ? 0 : 1
-  remote_user_login_policy = lookup(lookup(local.fabric_policies, "aaa", {}), "remote_user_login_policy", local.defaults.apic.fabric_policies.aaa.remote_user_login_policy)
-  default_fallback_check   = lookup(lookup(local.fabric_policies, "aaa", {}), "default_fallback_check", local.defaults.apic.fabric_policies.aaa.default_fallback_check)
-  default_realm            = lookup(lookup(local.fabric_policies, "aaa", {}), "default_realm", local.defaults.apic.fabric_policies.aaa.default_realm)
-  default_login_domain     = lookup(lookup(local.fabric_policies, "aaa", {}), "default_login_domain", "")
-  console_realm            = lookup(lookup(local.fabric_policies, "aaa", {}), "console_realm", local.defaults.apic.fabric_policies.aaa.console_realm)
-  console_login_domain     = lookup(lookup(local.fabric_policies, "aaa", {}), "console_login_domain", "")
+  count                    = try(local.modules.aci_aaa, true) == false ? 0 : 1
+  remote_user_login_policy = try(local.fabric_policies.aaa.remote_user_login_policy, local.defaults.apic.fabric_policies.aaa.remote_user_login_policy)
+  default_fallback_check   = try(local.fabric_policies.aaa.default_fallback_check, local.defaults.apic.fabric_policies.aaa.default_fallback_check)
+  default_realm            = try(local.fabric_policies.aaa.default_realm, local.defaults.apic.fabric_policies.aaa.default_realm)
+  default_login_domain     = try(local.fabric_policies.aaa.default_login_domain, "")
+  console_realm            = try(local.fabric_policies.aaa.console_realm, local.defaults.apic.fabric_policies.aaa.console_realm)
+  console_login_domain     = try(local.fabric_policies.aaa.console_login_domain, "")
 }
 
 module "aci_tacacs" {
   source  = "netascode/tacacs/aci"
   version = "0.1.0"
 
-  for_each            = { for tacacs in lookup(lookup(local.fabric_policies, "aaa", {}), "tacacs_providers", []) : tacacs.hostname_ip => tacacs if lookup(local.modules, "aci_tacacs", true) }
+  for_each            = { for tacacs in try(local.fabric_policies.aaa.tacacs_providers, []) : tacacs.hostname_ip => tacacs if try(local.modules.aci_tacacs, true) }
   hostname_ip         = each.value.hostname_ip
-  description         = lookup(each.value, "description", "")
-  protocol            = lookup(each.value, "protocol", local.defaults.apic.fabric_policies.aaa.tacacs_providers.protocol)
-  monitoring          = lookup(each.value, "monitoring", local.defaults.apic.fabric_policies.aaa.tacacs_providers.monitoring)
-  monitoring_username = lookup(each.value, "monitoring_username", "")
-  monitoring_password = lookup(each.value, "monitoring_password", "")
-  key                 = lookup(each.value, "key", "")
-  port                = lookup(each.value, "port", local.defaults.apic.fabric_policies.aaa.tacacs_providers.port)
-  retries             = lookup(each.value, "retries", local.defaults.apic.fabric_policies.aaa.tacacs_providers.retries)
-  timeout             = lookup(each.value, "timeout", local.defaults.apic.fabric_policies.aaa.tacacs_providers.timeout)
-  mgmt_epg_type       = lookup(each.value, "mgmt_epg", local.defaults.apic.fabric_policies.aaa.tacacs_providers.mgmt_epg)
-  mgmt_epg_name       = lookup(each.value, "mgmt_epg", local.defaults.apic.fabric_policies.aaa.tacacs_providers.mgmt_epg) == "oob" ? lookup(local.node_policies, "oob_endpoint_group", local.defaults.apic.node_policies.oob_endpoint_group) : lookup(local.node_policies, "inb_endpoint_group", local.defaults.apic.node_policies.inb_endpoint_group)
+  description         = try(each.value.description, "")
+  protocol            = try(each.value.protocol, local.defaults.apic.fabric_policies.aaa.tacacs_providers.protocol)
+  monitoring          = try(each.value.monitoring, local.defaults.apic.fabric_policies.aaa.tacacs_providers.monitoring)
+  monitoring_username = try(each.value.monitoring_username, "")
+  monitoring_password = try(each.value.monitoring_password, "")
+  key                 = try(each.value.key, "")
+  port                = try(each.value.port, local.defaults.apic.fabric_policies.aaa.tacacs_providers.port)
+  retries             = try(each.value.retries, local.defaults.apic.fabric_policies.aaa.tacacs_providers.retries)
+  timeout             = try(each.value.timeout, local.defaults.apic.fabric_policies.aaa.tacacs_providers.timeout)
+  mgmt_epg_type       = try(each.value.mgmt_epg, local.defaults.apic.fabric_policies.aaa.tacacs_providers.mgmt_epg)
+  mgmt_epg_name       = try(each.value.mgmt_epg, local.defaults.apic.fabric_policies.aaa.tacacs_providers.mgmt_epg) == "oob" ? try(local.node_policies.oob_endpoint_group, local.defaults.apic.node_policies.oob_endpoint_group) : try(local.node_policies.inb_endpoint_group, local.defaults.apic.node_policies.inb_endpoint_group)
 }
 
 module "aci_user" {
   source  = "netascode/user/aci"
   version = "0.2.0"
 
-  for_each         = { for user in lookup(lookup(local.fabric_policies, "aaa", {}), "users", []) : user.username => user if lookup(local.modules, "aci_user", true) }
+  for_each         = { for user in try(local.fabric_policies.aaa.users, []) : user.username => user if try(local.modules.aci_user, true) }
   username         = each.value.username
   password         = each.value.password
-  status           = lookup(each.value, "status", local.defaults.apic.fabric_policies.aaa.users.status)
-  certificate_name = lookup(each.value, "certificate_name", "")
-  description      = lookup(each.value, "description", "")
-  email            = lookup(each.value, "email", "")
-  expires          = lookup(each.value, "expires", local.defaults.apic.fabric_policies.aaa.users.expires)
-  expire_date      = lookup(each.value, "expire_date", null)
-  first_name       = lookup(each.value, "first_name", "")
-  last_name        = lookup(each.value, "last_name", "")
-  phone            = lookup(each.value, "phone", "")
-  domains = [for domain in lookup(each.value, "domains", []) : {
+  status           = try(each.value.status, local.defaults.apic.fabric_policies.aaa.users.status)
+  certificate_name = try(each.value.certificate_name, "")
+  description      = try(each.value.description, "")
+  email            = try(each.value.email, "")
+  expires          = try(each.value.expires, local.defaults.apic.fabric_policies.aaa.users.expires)
+  expire_date      = try(each.value.expire_date, null)
+  first_name       = try(each.value.first_name, "")
+  last_name        = try(each.value.last_name, "")
+  phone            = try(each.value.phone, "")
+  domains = [for domain in try(each.value.domains, []) : {
     name = domain.name
     roles = !contains(keys(domain), "roles") ? null : [for role in domain.roles : {
       name           = role.name
-      privilege_type = lookup(role, "privilege_type", local.defaults.apic.fabric_policies.aaa.users.domains.roles.privilege_type)
+      privilege_type = try(role.privilege_type, local.defaults.apic.fabric_policies.aaa.users.domains.roles.privilege_type)
     }]
   }]
-  certificates = lookup(each.value, "certificates", [])
-  ssh_keys     = lookup(each.value, "ssh_keys", [])
+  certificates = try(each.value.certificates, [])
+  ssh_keys     = try(each.value.ssh_keys, [])
 }
 
 module "aci_login_domain" {
   source  = "netascode/login-domain/aci"
   version = "0.2.0"
 
-  for_each    = { for dom in lookup(lookup(local.fabric_policies, "aaa", {}), "login_domains", []) : dom.name => dom if lookup(local.modules, "aci_login_domain", true) }
+  for_each    = { for dom in lootrykup(local.fabric_policies.aaa.login_domains, []) : dom.name => dom if try(local.modules.aci_login_domain, true) }
   name        = each.value.name
-  description = lookup(each.value, "description", "")
-  realm       = lookup(each.value, "realm", "")
-  tacacs_providers = [for prov in lookup(each.value, "tacacs_providers", []) : {
+  description = try(each.value.description, "")
+  realm       = try(each.value.realm, "")
+  tacacs_providers = [for prov in try(each.value.tacacs_providers, []) : {
     hostname_ip = prov.hostname_ip
-    priority    = lookup(prov, "priority", local.defaults.apic.fabric_policies.aaa.login_domains.tacacs_providers.priority)
+    priority    = try(prov.priority, local.defaults.apic.fabric_policies.aaa.login_domains.tacacs_providers.priority)
   }]
 
   depends_on = [
@@ -650,9 +650,9 @@ module "aci_ca_certificate" {
   source  = "netascode/ca-certificate/aci"
   version = "0.1.0"
 
-  for_each          = { for cert in lookup(lookup(local.fabric_policies, "aaa", {}), "ca_certificates", []) : cert.name => cert if lookup(local.modules, "aci_ca_certificate", true) }
+  for_each          = { for cert in try(local.fabric_policies.aaa.ca_certificates, []) : cert.name => cert if try(local.modules.aci_ca_certificate, true) }
   name              = "${each.value.name}${local.defaults.apic.fabric_policies.aaa.ca_certificates.name_suffix}"
-  description       = lookup(each.value, "description", "")
+  description       = try(each.value.description, "")
   certificate_chain = each.value.certificate_chain
 }
 
@@ -660,39 +660,39 @@ module "aci_keyring" {
   source  = "netascode/keyring/aci"
   version = "0.1.0"
 
-  for_each       = { for kr in lookup(lookup(local.fabric_policies, "aaa", {}), "key_rings", []) : kr.name => kr if lookup(local.modules, "aci_keyring", true) }
+  for_each       = { for kr in try(local.fabric_policies.aaa.key_rings, []) : kr.name => kr if try(local.modules.aci_keyring, true) }
   name           = "${each.value.name}${local.defaults.apic.fabric_policies.aaa.key_rings.name_suffix}"
-  description    = lookup(each.value, "description", "")
-  ca_certificate = lookup(each.value, "ca_certificate", "")
-  certificate    = lookup(each.value, "certificate", "")
-  private_key    = lookup(each.value, "private_key", "")
+  description    = try(each.value.description, "")
+  ca_certificate = try(each.value.ca_certificate, "")
+  certificate    = try(each.value.certificate, "")
+  private_key    = try(each.value.private_key, "")
 }
 
 module "aci_geolocation" {
   source  = "netascode/geolocation/aci"
   version = "0.2.0"
 
-  for_each    = { for site in lookup(lookup(local.fabric_policies, "geolocation", {}), "sites", []) : site.name => site if lookup(local.modules, "aci_geolocation", true) }
+  for_each    = { for site in try(local.fabric_policies.geolocation.sites, []) : site.name => site if try(local.modules.aci_geolocation, true) }
   name        = "${each.value.name}${local.defaults.apic.fabric_policies.geolocation.sites.name_suffix}"
-  description = lookup(each.value, "description", "")
-  buildings = [for building in lookup(each.value, "buildings", []) : {
+  description = try(each.value.description, "")
+  buildings = [for building in try(each.value.buildings, []) : {
     name        = "${building.name}${local.defaults.apic.fabric_policies.geolocation.sites.buildings.name_suffix}"
-    description = lookup(building, "description", null)
+    description = try(building.description, null)
     floors = !contains(keys(building), "floors") ? null : [for floor in building.floors : {
       name        = "${floor.name}${local.defaults.apic.fabric_policies.geolocation.sites.buildings.floors.name_suffix}"
-      description = lookup(floor, "description", null)
+      description = try(floor.description, null)
       rooms = !contains(keys(floor), "rooms") ? null : [for room in floor.rooms : {
         name        = "${room.name}${local.defaults.apic.fabric_policies.geolocation.sites.buildings.floors.rooms.name_suffix}"
-        description = lookup(room, "description", null)
+        description = try(room.description, null)
         rows = !contains(keys(room), "rows") ? null : [for row in room.rows : {
           name        = "${row.name}${local.defaults.apic.fabric_policies.geolocation.sites.buildings.floors.rooms.rows.name_suffix}"
-          description = lookup(row, "description", null)
+          description = try(row.description, null)
           racks = !contains(keys(row), "racks") ? null : [for rack in row.racks : {
             name        = "${rack.name}${local.defaults.apic.fabric_policies.geolocation.sites.buildings.floors.rooms.rows.racks.name_suffix}"
-            description = lookup(rack, "description", null)
+            description = try(rack.description, null)
             nodes = !contains(keys(rack), "nodes") ? null : [for node_ in rack.nodes : {
               node_id = node_
-              pod_id  = try([for node in lookup(local.node_policies, "nodes", []) : lookup(node, "pod", 1) if node.id == node_][0], local.defaults.apic.node_policies.nodes.pod)
+              pod_id  = try([for node in local.node_policies.nodes : try(node.pod, 1) if node.id == node_][0], local.defaults.apic.node_policies.nodes.pod)
             }]
           }]
         }]
@@ -705,35 +705,35 @@ module "aci_remote_location" {
   source  = "netascode/remote-location/aci"
   version = "0.1.0"
 
-  for_each        = { for rl in lookup(local.fabric_policies, "remote_locations", []) : rl.name => rl if lookup(local.modules, "aci_remote_location", true) }
+  for_each        = { for rl in try(local.fabric_policies.remote_locations, []) : rl.name => rl if try(local.modules.aci_remote_location, true) }
   name            = "${each.value.name}${local.defaults.apic.fabric_policies.remote_locations.name_suffix}"
   hostname_ip     = each.value.hostname_ip
-  description     = lookup(each.value, "description", "")
-  auth_type       = lookup(each.value, "auth_type", local.defaults.apic.fabric_policies.remote_locations.auth_type)
+  description     = try(each.value.description, "")
+  auth_type       = try(each.value.auth_type, local.defaults.apic.fabric_policies.remote_locations.auth_type)
   protocol        = each.value.protocol
-  path            = lookup(each.value, "path", local.defaults.apic.fabric_policies.remote_locations.path)
-  port            = lookup(each.value, "port", 0)
-  username        = lookup(each.value, "username", "")
-  password        = lookup(each.value, "password", "")
-  ssh_private_key = lookup(each.value, "ssh_private_key", "")
-  ssh_public_key  = lookup(each.value, "ssh_public_key", "")
-  ssh_passphrase  = lookup(each.value, "ssh_passphrase", "")
-  mgmt_epg_type   = lookup(each.value, "mgmt_epg", local.defaults.apic.fabric_policies.remote_locations.mgmt_epg)
-  mgmt_epg_name   = lookup(each.value, "mgmt_epg", local.defaults.apic.fabric_policies.remote_locations.mgmt_epg) == "oob" ? lookup(local.node_policies, "oob_endpoint_group", local.defaults.apic.node_policies.oob_endpoint_group) : lookup(local.node_policies, "inb_endpoint_group", local.defaults.apic.node_policies.inb_endpoint_group)
+  path            = try(each.value.path, local.defaults.apic.fabric_policies.remote_locations.path)
+  port            = try(each.value.port, 0)
+  username        = try(each.value.username, "")
+  password        = try(each.value.password, "")
+  ssh_private_key = try(each.value.ssh_private_key, "")
+  ssh_public_key  = try(each.value.ssh_public_key, "")
+  ssh_passphrase  = try(each.value.ssh_passphrase, "")
+  mgmt_epg_type   = try(each.value.mgmt_epg, local.defaults.apic.fabric_policies.remote_locations.mgmt_epg)
+  mgmt_epg_name   = try(each.value.mgmt_epg, local.defaults.apic.fabric_policies.remote_locations.mgmt_epg) == "oob" ? try(local.node_policies.oob_endpoint_group, local.defaults.apic.node_policies.oob_endpoint_group) : try(local.node_policies.inb_endpoint_group, local.defaults.apic.node_policies.inb_endpoint_group)
 }
 
 module "aci_fabric_scheduler" {
   source  = "netascode/fabric-scheduler/aci"
   version = "0.2.0"
 
-  for_each    = { for scheduler in lookup(local.fabric_policies, "schedulers", []) : scheduler.name => scheduler if lookup(local.modules, "aci_fabric_scheduler", true) }
+  for_each    = { for scheduler in try(local.fabric_policies.schedulers, []) : scheduler.name => scheduler if try(local.modules.aci_fabric_scheduler, true) }
   name        = "${each.value.name}${local.defaults.apic.fabric_policies.schedulers.name_suffix}"
-  description = lookup(each.value, "description", "")
-  recurring_windows = [for win in lookup(each.value, "recurring_windows", []) : {
+  description = try(each.value.description, "")
+  recurring_windows = [for win in try(each.value.recurring_windows, []) : {
     name   = win.name
-    day    = lookup(win, "day", local.defaults.apic.fabric_policies.schedulers.recurring_windows.day)
-    hour   = lookup(win, "hour", local.defaults.apic.fabric_policies.schedulers.recurring_windows.hour)
-    minute = lookup(win, "minute", local.defaults.apic.fabric_policies.schedulers.recurring_windows.minute)
+    day    = try(win.day, local.defaults.apic.fabric_policies.schedulers.recurring_windows.day)
+    hour   = try(win.hour, local.defaults.apic.fabric_policies.schedulers.recurring_windows.hour)
+    minute = try(win.minute, local.defaults.apic.fabric_policies.schedulers.recurring_windows.minute)
   }]
 }
 
@@ -741,12 +741,12 @@ module "aci_config_export" {
   source  = "netascode/config-export/aci"
   version = "0.1.0"
 
-  for_each        = { for ce in lookup(local.fabric_policies, "config_exports", []) : ce.name => ce if lookup(local.modules, "aci_config_export", true) }
+  for_each        = { for ce in try(local.fabric_policies.config_exports, []) : ce.name => ce if try(local.modules.aci_config_export, true) }
   name            = "${each.value.name}${local.defaults.apic.fabric_policies.config_exports.name_suffix}"
-  description     = lookup(each.value, "description", "")
-  format          = lookup(each.value, "format", local.defaults.apic.fabric_policies.config_exports.format)
-  remote_location = lookup(each.value, "remote_location", "")
-  scheduler       = lookup(each.value, "scheduler", "")
+  description     = try(each.value.description, "")
+  format          = try(each.value.format, local.defaults.apic.fabric_policies.config_exports.format)
+  remote_location = try(each.value.remote_location, "")
+  scheduler       = try(each.value.scheduler, "")
 
   depends_on = [
     module.aci_remote_location,
@@ -758,17 +758,17 @@ module "aci_snmp_trap_policy" {
   source  = "netascode/snmp-trap-policy/aci"
   version = "0.2.0"
 
-  for_each    = { for trap in lookup(lookup(local.fabric_policies, "monitoring", {}), "snmp_traps", []) : trap.name => trap if lookup(local.modules, "aci_snmp_trap_policy", true) }
+  for_each    = { for trap in try(local.fabric_policies.monitoring.snmp_traps, []) : trap.name => trap if try(local.modules.aci_snmp_trap_policy, true) }
   name        = "${each.value.name}${local.defaults.apic.fabric_policies.monitoring.snmp_traps.name_suffix}"
-  description = lookup(each.value, "description", "")
-  destinations = [for dest in lookup(each.value, "destinations", []) : {
+  description = try(each.value.description, "")
+  destinations = [for dest in try(each.value.destinations, []) : {
     hostname_ip   = dest.hostname_ip
-    port          = lookup(dest, "port", local.defaults.apic.fabric_policies.monitoring.snmp_traps.destinations.port)
+    port          = try(dest.port, local.defaults.apic.fabric_policies.monitoring.snmp_traps.destinations.port)
     community     = dest.community
-    security      = lookup(dest, "security", local.defaults.apic.fabric_policies.monitoring.snmp_traps.destinations.security)
-    version       = lookup(dest, "version", local.defaults.apic.fabric_policies.monitoring.snmp_traps.destinations.version)
-    mgmt_epg_type = lookup(dest, "mgmt_epg", local.defaults.apic.fabric_policies.monitoring.snmp_traps.destinations.mgmt_epg)
-    mgmt_epg_name = lookup(dest, "mgmt_epg", local.defaults.apic.fabric_policies.monitoring.snmp_traps.destinations.mgmt_epg) == "oob" ? lookup(local.node_policies, "oob_endpoint_group", local.defaults.apic.node_policies.oob_endpoint_group) : lookup(local.node_policies, "inb_endpoint_group", local.defaults.apic.node_policies.inb_endpoint_group)
+    security      = try(dest.security, local.defaults.apic.fabric_policies.monitoring.snmp_traps.destinations.security)
+    version       = try(dest.version, local.defaults.apic.fabric_policies.monitoring.snmp_traps.destinations.version)
+    mgmt_epg_type = try(dest.mgmt_epg, local.defaults.apic.fabric_policies.monitoring.snmp_traps.destinations.mgmt_epg)
+    mgmt_epg_name = try(dest.mgmt_epg, local.defaults.apic.fabric_policies.monitoring.snmp_traps.destinations.mgmt_epg) == "oob" ? try(local.node_policies.oob_endpoint_group, local.defaults.apic.node_policies.oob_endpoint_group) : try(local.node_policies.inb_endpoint_group, local.defaults.apic.node_policies.inb_endpoint_group)
   }]
 }
 
@@ -776,27 +776,27 @@ module "aci_syslog_policy" {
   source  = "netascode/syslog-policy/aci"
   version = "0.2.1"
 
-  for_each            = { for syslog in lookup(lookup(local.fabric_policies, "monitoring", {}), "syslogs", []) : syslog.name => syslog if lookup(local.modules, "aci_syslog_policy", true) }
+  for_each            = { for syslog in try(local.fabric_policies.monitoring.syslogs, []) : syslog.name => syslog if try(local.modules.aci_syslog_policy, true) }
   name                = "${each.value.name}${local.defaults.apic.fabric_policies.monitoring.syslogs.name_suffix}"
-  description         = lookup(each.value, "description", "")
-  format              = lookup(each.value, "format", local.defaults.apic.fabric_policies.monitoring.syslogs.format)
-  show_millisecond    = lookup(each.value, "show_millisecond", local.defaults.apic.fabric_policies.monitoring.syslogs.show_millisecond)
-  admin_state         = lookup(each.value, "admin_state", local.defaults.apic.fabric_policies.monitoring.syslogs.admin_state)
-  local_admin_state   = lookup(each.value, "local_admin_state", local.defaults.apic.fabric_policies.monitoring.syslogs.local_admin_state)
-  local_severity      = lookup(each.value, "local_severity", local.defaults.apic.fabric_policies.monitoring.syslogs.local_severity)
-  console_admin_state = lookup(each.value, "console_admin_state", local.defaults.apic.fabric_policies.monitoring.syslogs.console_admin_state)
-  console_severity    = lookup(each.value, "console_severity", local.defaults.apic.fabric_policies.monitoring.syslogs.console_severity)
-  destinations = [for dest in lookup(each.value, "destinations", []) : {
-    name          = lookup(dest, "name", "")
+  description         = try(each.value.description, "")
+  format              = try(each.value.format, local.defaults.apic.fabric_policies.monitoring.syslogs.format)
+  show_millisecond    = try(each.value.show_millisecond, local.defaults.apic.fabric_policies.monitoring.syslogs.show_millisecond)
+  admin_state         = try(each.value.admin_state, local.defaults.apic.fabric_policies.monitoring.syslogs.admin_state)
+  local_admin_state   = try(each.value.local_admin_state, local.defaults.apic.fabric_policies.monitoring.syslogs.local_admin_state)
+  local_severity      = try(each.value.local_severity, local.defaults.apic.fabric_policies.monitoring.syslogs.local_severity)
+  console_admin_state = try(each.value.console_admin_state, local.defaults.apic.fabric_policies.monitoring.syslogs.console_admin_state)
+  console_severity    = try(each.value.console_severity, local.defaults.apic.fabric_policies.monitoring.syslogs.console_severity)
+  destinations = [for dest in try(each.value.destinations, []) : {
+    name          = try(dest.name, "")
     hostname_ip   = dest.hostname_ip
-    protocol      = lookup(dest, "protocol", null)
-    port          = lookup(dest, "port", local.defaults.apic.fabric_policies.monitoring.syslogs.destinations.port)
-    admin_state   = lookup(dest, "admin_state", local.defaults.apic.fabric_policies.monitoring.syslogs.destinations.admin_state)
-    format        = lookup(each.value, "format", local.defaults.apic.fabric_policies.monitoring.syslogs.format)
-    facility      = lookup(dest, "facility", local.defaults.apic.fabric_policies.monitoring.syslogs.destinations.facility)
-    severity      = lookup(dest, "severity", local.defaults.apic.fabric_policies.monitoring.syslogs.destinations.severity)
-    mgmt_epg_type = lookup(dest, "mgmt_epg", local.defaults.apic.fabric_policies.monitoring.syslogs.destinations.mgmt_epg)
-    mgmt_epg_name = lookup(dest, "mgmt_epg", local.defaults.apic.fabric_policies.monitoring.syslogs.destinations.mgmt_epg) == "oob" ? lookup(local.node_policies, "oob_endpoint_group", local.defaults.apic.node_policies.oob_endpoint_group) : lookup(local.node_policies, "inb_endpoint_group", local.defaults.apic.node_policies.inb_endpoint_group)
+    protocol      = try(dest.protocol, null)
+    port          = try(dest.port, local.defaults.apic.fabric_policies.monitoring.syslogs.destinations.port)
+    admin_state   = try(dest.admin_state, local.defaults.apic.fabric_policies.monitoring.syslogs.destinations.admin_state)
+    format        = try(each.value.format, local.defaults.apic.fabric_policies.monitoring.syslogs.format)
+    facility      = try(dest.facility, local.defaults.apic.fabric_policies.monitoring.syslogs.destinations.facility)
+    severity      = try(dest.severity, local.defaults.apic.fabric_policies.monitoring.syslogs.destinations.severity)
+    mgmt_epg_type = try(dest.mgmt_epg, local.defaults.apic.fabric_policies.monitoring.syslogs.destinations.mgmt_epg)
+    mgmt_epg_name = try(dest.mgmt_epg, local.defaults.apic.fabric_policies.monitoring.syslogs.destinations.mgmt_epg) == "oob" ? try(local.node_policies.oob_endpoint_group, local.defaults.apic.node_policies.oob_endpoint_group) : try(local.node_policies.inb_endpoint_group, local.defaults.apic.node_policies.inb_endpoint_group)
   }]
 }
 
@@ -804,15 +804,15 @@ module "aci_monitoring_policy" {
   source  = "netascode/monitoring-policy/aci"
   version = "0.2.1"
 
-  count              = lookup(local.modules, "aci_monitoring_policy", true) == false ? 0 : 1
-  snmp_trap_policies = [for policy in lookup(lookup(local.fabric_policies, "monitoring", {}), "snmp_traps", []) : "${policy.name}${local.defaults.apic.fabric_policies.monitoring.snmp_traps.name_suffix}"]
-  syslog_policies = [for policy in lookup(lookup(local.fabric_policies, "monitoring", {}), "syslogs", []) : {
+  count              = try(local.modules.aci_monitoring_policy, true) == false ? 0 : 1
+  snmp_trap_policies = [for policy in try(local.fabric_policies.monitoring.snmp_traps, []) : "${policy.name}${local.defaults.apic.fabric_policies.monitoring.snmp_traps.name_suffix}"]
+  syslog_policies = [for policy in try(local.fabric_policies.monitoring.syslogs, []) : {
     name             = "${policy.name}${local.defaults.apic.fabric_policies.monitoring.syslogs.name_suffix}"
-    audit            = lookup(policy, "audit", local.defaults.apic.fabric_policies.monitoring.syslogs.audit)
-    events           = lookup(policy, "events", local.defaults.apic.fabric_policies.monitoring.syslogs.events)
-    faults           = lookup(policy, "faults", local.defaults.apic.fabric_policies.monitoring.syslogs.faults)
-    session          = lookup(policy, "session", local.defaults.apic.fabric_policies.monitoring.syslogs.session)
-    minimum_severity = lookup(policy, "minimum_severity", local.defaults.apic.fabric_policies.monitoring.syslogs.minimum_severity)
+    audit            = try(policy.audit, local.defaults.apic.fabric_policies.monitoring.syslogs.audit)
+    events           = try(policy.events, local.defaults.apic.fabric_policies.monitoring.syslogs.events)
+    faults           = try(policy.faults, local.defaults.apic.fabric_policies.monitoring.syslogs.faults)
+    session          = try(policy.session, local.defaults.apic.fabric_policies.monitoring.syslogs.session)
+    minimum_severity = try(policy.minimum_severity, local.defaults.apic.fabric_policies.monitoring.syslogs.minimum_severity)
   }]
 
   depends_on = [
@@ -825,39 +825,39 @@ module "aci_management_access_policy" {
   source  = "netascode/management-access-policy/aci"
   version = "0.1.0"
 
-  for_each                     = { for policy in lookup(lookup(local.fabric_policies, "pod_policies", {}), "management_access_policies", []) : policy.name => policy if lookup(local.modules, "aci_management_access_policy", true) }
+  for_each                     = { for policy in try(local.fabric_policies.pod_policies.management_access_policies, []) : policy.name => policy if try(local.modules.aci_management_access_policy, true) }
   name                         = "${each.value.name}${local.defaults.apic.fabric_policies.pod_policies.management_access_policies.name_suffix}"
-  description                  = lookup(each.value, "description", "")
-  telnet_admin_state           = lookup(lookup(each.value, "telnet", {}), "admin_state", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.telnet.admin_state)
-  telnet_port                  = lookup(lookup(each.value, "telnet", {}), "port", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.telnet.port)
-  ssh_admin_state              = lookup(lookup(each.value, "ssh", {}), "admin_state", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.admin_state)
-  ssh_password_auth            = lookup(lookup(each.value, "ssh", {}), "password_auth", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.password_auth)
-  ssh_port                     = lookup(lookup(each.value, "ssh", {}), "port", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.port)
-  ssh_aes128_ctr               = lookup(lookup(each.value, "ssh", {}), "aes128_ctr", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.aes128_ctr)
-  ssh_aes128_gcm               = lookup(lookup(each.value, "ssh", {}), "aes128_gcm", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.aes128_gcm)
-  ssh_aes192_ctr               = lookup(lookup(each.value, "ssh", {}), "aes192_ctr", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.aes192_ctr)
-  ssh_aes256_ctr               = lookup(lookup(each.value, "ssh", {}), "aes256_ctr", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.aes256_ctr)
-  ssh_chacha                   = lookup(lookup(each.value, "ssh", {}), "chacha", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.chacha)
-  ssh_hmac_sha1                = lookup(lookup(each.value, "ssh", {}), "hmac_sha1", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.hmac_sha1)
-  ssh_hmac_sha2_256            = lookup(lookup(each.value, "ssh", {}), "hmac_sha2_256", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.hmac_sha2_256)
-  ssh_hmac_sha2_512            = lookup(lookup(each.value, "ssh", {}), "hmac_sha2_512", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.hmac_sha2_512)
-  https_admin_state            = lookup(lookup(each.value, "https", {}), "admin_state", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.https.admin_state)
-  https_client_cert_auth_state = lookup(lookup(each.value, "https", {}), "client_cert_auth_state", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.https.client_cert_auth_state)
-  https_port                   = lookup(lookup(each.value, "https", {}), "port", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.https.port)
-  https_dh                     = lookup(lookup(each.value, "https", {}), "dh", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.https.dh)
-  https_tlsv1                  = lookup(lookup(each.value, "https", {}), "tlsv1", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.https.tlsv1)
-  https_tlsv1_1                = lookup(lookup(each.value, "https", {}), "tlsv1_1", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.https.tlsv1_1)
-  https_tlsv1_2                = lookup(lookup(each.value, "https", {}), "tlsv1_2", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.https.tlsv1_2)
-  https_keyring                = lookup(lookup(each.value, "https", {}), "key_ring", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.https.key_ring)
-  http_admin_state             = lookup(lookup(each.value, "http", {}), "admin_state", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.http.admin_state)
-  http_port                    = lookup(lookup(each.value, "http", {}), "port", local.defaults.apic.fabric_policies.pod_policies.management_access_policies.http.port)
+  description                  = try(each.value.description, "")
+  telnet_admin_state           = try(each.value.telnet.admin_state, local.defaults.apic.fabric_policies.pod_policies.management_access_policies.telnet.admin_state)
+  telnet_port                  = try(each.value.telnet.port, local.defaults.apic.fabric_policies.pod_policies.management_access_policies.telnet.port)
+  ssh_admin_state              = try(each.value.ssh.admin_state, local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.admin_state)
+  ssh_password_auth            = try(each.value.ssh.password_auth, local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.password_auth)
+  ssh_port                     = try(each.value.ssh.port, local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.port)
+  ssh_aes128_ctr               = try(each.value.ssh.aes128_ctr, local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.aes128_ctr)
+  ssh_aes128_gcm               = try(each.value.ssh.aes128_gcm, local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.aes128_gcm)
+  ssh_aes192_ctr               = try(each.value.ssh.aes192_ctr, local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.aes192_ctr)
+  ssh_aes256_ctr               = try(each.value.ssh.aes256_ctr, local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.aes256_ctr)
+  ssh_chacha                   = try(each.value.ssh.chacha, local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.chacha)
+  ssh_hmac_sha1                = try(each.value.ssh.hmac_sha1, local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.hmac_sha1)
+  ssh_hmac_sha2_256            = try(each.value.ssh.hmac_sha2_256, local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.hmac_sha2_256)
+  ssh_hmac_sha2_512            = try(each.value.ssh.hmac_sha2_512, local.defaults.apic.fabric_policies.pod_policies.management_access_policies.ssh.hmac_sha2_512)
+  https_admin_state            = try(each.value.https.admin_state, local.defaults.apic.fabric_policies.pod_policies.management_access_policies.https.admin_state)
+  https_client_cert_auth_state = try(each.value.https.client_cert_auth_state, local.defaults.apic.fabric_policies.pod_policies.management_access_policies.https.client_cert_auth_state)
+  https_port                   = try(each.value.https.port, local.defaults.apic.fabric_policies.pod_policies.management_access_policies.https.port)
+  https_dh                     = try(each.value.https.dh, local.defaults.apic.fabric_policies.pod_policies.management_access_policies.https.dh)
+  https_tlsv1                  = try(each.value.https.tlsv1, local.defaults.apic.fabric_policies.pod_policies.management_access_policies.https.tlsv1)
+  https_tlsv1_1                = try(each.value.https.tlsv1_1, local.defaults.apic.fabric_policies.pod_policies.management_access_policies.https.tlsv1_1)
+  https_tlsv1_2                = try(each.value.https.tlsv1_2, local.defaults.apic.fabric_policies.pod_policies.management_access_policies.https.tlsv1_2)
+  https_keyring                = try(each.value.https.key_ring, local.defaults.apic.fabric_policies.pod_policies.management_access_policies.https.key_ring)
+  http_admin_state             = try(each.value.http.admin_state, local.defaults.apic.fabric_policies.pod_policies.management_access_policies.http.admin_state)
+  http_port                    = try(each.value.http.port, local.defaults.apic.fabric_policies.pod_policies.management_access_policies.http.port)
 }
 
 module "aci_interface_type" {
   source  = "netascode/interface-type/aci"
   version = "0.1.0"
 
-  for_each = { for type in local.interface_types : type.key => type if lookup(local.modules, "aci_interface_type", true) }
+  for_each = { for type in local.interface_types : type.key => type if try(local.modules.aci_interface_type, true) }
   pod_id   = each.value.pod_id
   node_id  = each.value.node_id
   module   = each.value.module
@@ -869,7 +869,7 @@ module "aci_smart_licensing" {
   source  = "netascode/smart-licensing/aci"
   version = "0.1.1"
 
-  count              = lookup(local.modules, "aci_smart_licensing", true) == true && try(local.fabric_policies.smart_licensing.registration_token, "") != "" ? 1 : 0
+  count              = try(local.modules.aci_smart_licensing, true) == true && try(local.fabric_policies.smart_licensing.registration_token, "") != "" ? 1 : 0
   mode               = try(local.fabric_policies.smart_licensing.mode, local.defaults.apic.fabric_policies.smart_licensing.mode)
   registration_token = try(local.fabric_policies.smart_licensing.registration_token, "")
   url                = try(local.fabric_policies.smart_licensing.url, local.defaults.apic.fabric_policies.smart_licensing.url)
@@ -889,7 +889,7 @@ module "aci_fabric_span_destination_group" {
   source  = "netascode/fabric-span-destination-group/aci"
   version = "0.1.0"
 
-  for_each            = { for span in try(local.fabric_policies.span.destination_groups, []) : span.name => span if lookup(local.modules, "aci_fabric_span_destination_group", true) }
+  for_each            = { for span in try(local.fabric_policies.span.destination_groups, []) : span.name => span if try(local.modules.aci_fabric_span_destination_group, true) }
   name                = "${each.value.name}${local.defaults.apic.fabric_policies.span.destination_groups.name_suffix}"
   description         = try(each.value.description, "")
   tenant              = try(each.value.tenant, "")
@@ -909,7 +909,7 @@ module "aci_fabric_span_source_group" {
   source  = "netascode/fabric-span-source-group/aci"
   version = "0.1.1"
 
-  for_each    = { for span in try(local.fabric_policies.span.source_groups, []) : span.name => span if lookup(local.modules, "aci_fabric_span_source_group", true) }
+  for_each    = { for span in try(local.fabric_policies.span.source_groups, []) : span.name => span if try(local.modules.aci_fabric_span_source_group, true) }
   name        = "${each.value.name}${local.defaults.apic.fabric_policies.span.source_groups.name_suffix}"
   description = try(each.value.description, "")
   admin_state = try(each.value.admin_state, local.defaults.apic.fabric_policies.span.source_groups.admin_state)
@@ -923,7 +923,7 @@ module "aci_fabric_span_source_group" {
     bridge_domain = try(s.bridge_domain, null)
     fabric_paths = [for fp in try(s.fabric_paths, []) : {
       node_id = fp.node_id
-      pod_id  = try(fp.pod_id, [for n in lookup(local.node_policies, "nodes", []) : lookup(n, "pod", local.defaults.apic.node_policies.nodes.pod) if n.id == fp.node_id][0], local.defaults.apic.node_policies.nodes.pod)
+      pod_id  = try(fp.pod_id, [for n in local.node_policies.nodes : try(n.pod, local.defaults.apic.node_policies.nodes.pod) if n.id == fp.node_id][0], local.defaults.apic.node_policies.nodes.pod)
       port    = fp.port
       module  = try(fp.module, 1)
     }]
