@@ -632,7 +632,7 @@ module "aci_login_domain" {
   source  = "netascode/login-domain/aci"
   version = "0.2.0"
 
-  for_each    = { for dom in lootrykup(local.fabric_policies.aaa.login_domains, []) : dom.name => dom if try(local.modules.aci_login_domain, true) }
+  for_each    = { for dom in try(local.fabric_policies.aaa.login_domains, []) : dom.name => dom if try(local.modules.aci_login_domain, true) }
   name        = each.value.name
   description = try(each.value.description, "")
   realm       = try(each.value.realm, "")
