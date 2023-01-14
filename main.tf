@@ -204,19 +204,19 @@ module "aci_date_time_policy" {
 
   for_each                       = { for policy in try(local.fabric_policies.pod_policies.date_time_policies, []) : policy.name => policy if try(local.modules.aci_date_time_policy, true) }
   name                           = "${each.value.name}${local.defaults.apic.fabric_policies.pod_policies.date_time_policies.name_suffix}"
-  apic_ntp_server_master_stratum = try(each.value, "apic_ntp_server_master_stratum", local.defaults.apic.fabric_policies.pod_policies.date_time_policies.apic_ntp_server_master_stratum)
-  ntp_admin_state                = try(each.value, "ntp_admin_state", local.defaults.apic.fabric_policies.pod_policies.date_time_policies.ntp_admin_state)
-  ntp_auth_state                 = try(each.value, "ntp_auth_state", local.defaults.apic.fabric_policies.pod_policies.date_time_policies.ntp_auth_state)
-  apic_ntp_server_master_mode    = try(each.value, "apic_ntp_server_master_mode", local.defaults.apic.fabric_policies.pod_policies.date_time_policies.apic_ntp_server_master_mode)
-  apic_ntp_server_state          = try(each.value, "apic_ntp_server_state", local.defaults.apic.fabric_policies.pod_policies.date_time_policies.apic_ntp_server_state)
+  apic_ntp_server_master_stratum = try(each.value.apic_ntp_server_master_stratum, local.defaults.apic.fabric_policies.pod_policies.date_time_policies.apic_ntp_server_master_stratum)
+  ntp_admin_state                = try(each.value.ntp_admin_state, local.defaults.apic.fabric_policies.pod_policies.date_time_policies.ntp_admin_state)
+  ntp_auth_state                 = try(each.value.ntp_auth_state, local.defaults.apic.fabric_policies.pod_policies.date_time_policies.ntp_auth_state)
+  apic_ntp_server_master_mode    = try(each.value.apic_ntp_server_master_mode, local.defaults.apic.fabric_policies.pod_policies.date_time_policies.apic_ntp_server_master_mode)
+  apic_ntp_server_state          = try(each.value.apic_ntp_server_state, local.defaults.apic.fabric_policies.pod_policies.date_time_policies.apic_ntp_server_state)
   ntp_servers = [for server in try(each.value, "ntp_servers", []) : {
     hostname_ip   = server.hostname_ip
-    preferred     = try(server, "preferred", local.defaults.apic.fabric_policies.pod_policies.date_time_policies.ntp_servers.preferred)
-    mgmt_epg_type = try(server, "mgmt_epg", local.defaults.apic.fabric_policies.pod_policies.date_time_policies.ntp_servers.mgmt_epg)
-    mgmt_epg_name = try(server, "mgmt_epg", local.defaults.apic.fabric_policies.pod_policies.date_time_policies.ntp_servers.mgmt_epg) == "oob" ? try(local.node_policies, "oob_endpoint_group", local.defaults.apic.node_policies.oob_endpoint_group) : try(local.node_policies, "inb_endpoint_group", local.defaults.apic.node_policies.inb_endpoint_group)
-    auth_key_id   = try(server, "auth_key_id", null)
+    preferred     = try(server.preferred, local.defaults.apic.fabric_policies.pod_policies.date_time_policies.ntp_servers.preferred)
+    mgmt_epg_type = try(server.mgmt_epg, local.defaults.apic.fabric_policies.pod_policies.date_time_policies.ntp_servers.mgmt_epg)
+    mgmt_epg_name = try(server.mgmt_epg, local.defaults.apic.fabric_policies.pod_policies.date_time_policies.ntp_servers.mgmt_epg) == "oob" ? try(local.node_policies, "oob_endpoint_group", local.defaults.apic.node_policies.oob_endpoint_group) : try(local.node_policies, "inb_endpoint_group", local.defaults.apic.node_policies.inb_endpoint_group)
+    auth_key_id   = try(server.auth_key_id, null)
   }]
-  ntp_keys = [for key in try(each.value, "ntp_keys", []) : {
+  ntp_keys = [for key in try(each.value.ntp_keys, []) : {
     id        = key.id
     key       = key.key
     auth_type = key.auth_type
@@ -398,10 +398,10 @@ module "aci_fabric_leaf_switch_profile_manual" {
   selectors = [for selector in try(each.value.selectors, []) : {
     name         = "${selector.name}${local.defaults.apic.fabric_policies.leaf_switch_profiles.selectors.name_suffix}"
     policy_group = try("${selector.policy}${local.defaults.apic.fabric_policies.leaf_switch_policy_groups.name_suffix}", null)
-    node_blocks = [for block in try(selector, "node_blocks", []) : {
+    node_blocks = [for block in try(selector.node_blocks, []) : {
       name = "${block.name}${local.defaults.apic.fabric_policies.leaf_switch_profiles.selectors.node_blocks.name_suffix}"
       from = block.from
-      to   = try(block, "to", block.from)
+      to   = try(block.to, block.from)
     }]
   }]
   interface_profiles = [for profile in try(each.value.interface_profiles, []) : "${profile}${local.defaults.apic.fabric_policies.leaf_interface_profiles.name_suffix}"]
