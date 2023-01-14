@@ -209,7 +209,7 @@ module "aci_date_time_policy" {
   ntp_auth_state                 = try(each.value.ntp_auth_state, local.defaults.apic.fabric_policies.pod_policies.date_time_policies.ntp_auth_state)
   apic_ntp_server_master_mode    = try(each.value.apic_ntp_server_master_mode, local.defaults.apic.fabric_policies.pod_policies.date_time_policies.apic_ntp_server_master_mode)
   apic_ntp_server_state          = try(each.value.apic_ntp_server_state, local.defaults.apic.fabric_policies.pod_policies.date_time_policies.apic_ntp_server_state)
-  ntp_servers = [for server in try(each.value, "ntp_servers", []) : {
+  ntp_servers = [for server in try(each.value.ntp_servers, []) : {
     hostname_ip   = server.hostname_ip
     preferred     = try(server.preferred, local.defaults.apic.fabric_policies.pod_policies.date_time_policies.ntp_servers.preferred)
     mgmt_epg_type = try(server.mgmt_epg, local.defaults.apic.fabric_policies.pod_policies.date_time_policies.ntp_servers.mgmt_epg)
