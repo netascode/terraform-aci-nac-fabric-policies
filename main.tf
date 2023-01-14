@@ -550,7 +550,7 @@ module "aci_vmware_vmm_domain" {
     username = cp.username
     password = cp.password
   }]
-  vcenters = [for vc in try(each.valuevcenters, []) : {
+  vcenters = [for vc in try(each.value.vcenters, []) : {
     name              = "${vc.name}${local.defaults.apic.fabric_policies.vmware_vmm_domains.vcenters.name_suffix}"
     hostname_ip       = vc.hostname_ip
     datacenter        = vc.datacenter
