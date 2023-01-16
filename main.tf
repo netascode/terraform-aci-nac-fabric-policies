@@ -99,7 +99,6 @@ module "aci_ptp" {
   announce_timeout  = try(local.fabric_policies.ptp.announce_timeout, local.defaults.apic.fabric_policies.ptp.announce_timeout)
   sync_interval     = try(local.fabric_policies.ptp.sync_interval, local.defaults.apic.fabric_policies.ptp.sync_interval)
   delay_interval    = try(local.fabric_policies.ptp.delay_interval, local.defaults.apic.fabric_policies.ptp.delay_interval)
-
 }
 
 module "aci_ip_aging" {
