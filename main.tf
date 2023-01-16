@@ -91,8 +91,15 @@ module "aci_ptp" {
   source  = "netascode/ptp/aci"
   version = "0.1.0"
 
-  count       = try(local.modules.aci_ptp, true) == false ? 0 : 1
-  admin_state = try(local.fabric_policies.ptp_admin_state, local.defaults.apic.fabric_policies.ptp_admin_state)
+  count             = try(local.modules.aci_ptp, true) == false ? 0 : 1
+  admin_state       = try(local.fabric_policies.ptp.admin_state, local.defaults.apic.fabric_policies.ptp.admin_state)
+  global_domain     = try(local.fabric_policies.ptp.global_domain, local.defaults.apic.fabric_policies.ptp.global_domain)
+  profile           = try(local.fabric_policies.ptp.profile, local.defaults.apic.fabric_policies.ptp.profile)
+  announce_interval = try(local.fabric_policies.ptp.announce_interval, local.defaults.apic.fabric_policies.ptp.announce_interval)
+  announce_timeout  = try(local.fabric_policies.ptp.announce_timeout, local.defaults.apic.fabric_policies.ptp.announce_timeout)
+  sync_interval     = try(local.fabric_policies.ptp.sync_interval, local.defaults.apic.fabric_policies.ptp.sync_interval)
+  delay_interval    = try(local.fabric_policies.ptp.delay_interval, local.defaults.apic.fabric_policies.ptp.delay_interval)
+
 }
 
 module "aci_ip_aging" {
