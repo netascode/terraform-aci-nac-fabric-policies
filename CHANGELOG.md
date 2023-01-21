@@ -1,4 +1,4 @@
-## 0.3.5 (unreleased)
+## 0.4.0 (unreleased)
 
 - Add support for smart licensing
 - Fix regex validation of VMware VMM vCenter username to allow for `domain\username` format
@@ -6,6 +6,8 @@
 - Add support for enhanced LAGs and uplink configuration for VMware VMM domains
 - Add fabric SPAN destination group
 - Add fabric SPAN source group
+- Include default values in module
+- BREAKING CHANGE: `depends_on` can no longer be used to express explicit dependencies between NaC modules. The variable `dependencies` and the output `critical_resources_done` can be used instead, to ensure a certain order of operations.
 
 ## 0.3.4
 

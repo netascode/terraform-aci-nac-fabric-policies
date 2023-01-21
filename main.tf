@@ -1,5 +1,6 @@
 locals {
-  defaults           = try(var.model.defaults, {})
+  user_defaults      = { "defaults" : try(var.model.defaults, {}) }
+  defaults           = lookup(yamldecode(data.utils_yaml_merge.defaults.output), "defaults")
   modules            = try(var.model.modules, {})
   apic               = try(var.model.apic, {})
   fabric_policies    = try(local.apic.fabric_policies, {})
@@ -21,12 +22,26 @@ locals {
   ])
 }
 
+data "utils_yaml_merge" "defaults" {
+  input = [file("${path.module}/defaults/defaults.yaml"), yamlencode(local.user_defaults)]
+}
+
+resource "null_resource" "dependencies" {
+  triggers = {
+    dependencies = join(",", var.dependencies)
+  }
+}
+
 module "aci_apic_connectivity_preference" {
   source  = "netascode/apic-connectivity-preference/aci"
   version = "0.1.0"
 
   count                = try(local.modules.aci_apic_connectivity_preference, true) == false ? 0 : 1
   interface_preference = try(local.fabric_policies.apic_conn_pref, local.defaults.apic.fabric_policies.apic_conn_pref)
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_banner" {
@@ -39,6 +54,10 @@ module "aci_banner" {
   apic_gui_alias          = try(local.fabric_policies.banners.apic_gui_alias, "")
   apic_cli_banner         = try(local.fabric_policies.banners.apic_cli_banner, "")
   switch_cli_banner       = try(local.fabric_policies.banners.switch_cli_banner, "")
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_endpoint_loop_protection" {
@@ -50,6 +69,10 @@ module "aci_endpoint_loop_protection" {
   admin_state          = try(local.fabric_policies.ep_loop_protection.admin_state, local.defaults.apic.fabric_policies.ep_loop_protection.admin_state)
   detection_interval   = try(local.fabric_policies.ep_loop_protection.detection_interval, local.defaults.apic.fabric_policies.ep_loop_protection.detection_interval)
   detection_multiplier = try(local.fabric_policies.ep_loop_protection.detection_multiplier, local.defaults.apic.fabric_policies.ep_loop_protection.detection_multiplier)
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_rogue_endpoint_control" {
@@ -61,6 +84,10 @@ module "aci_rogue_endpoint_control" {
   hold_interval        = try(local.fabric_policies.rogue_ep_control.hold_interval, local.defaults.apic.fabric_policies.rogue_ep_control.hold_interval)
   detection_interval   = try(local.fabric_policies.rogue_ep_control.detection_interval, local.defaults.apic.fabric_policies.rogue_ep_control.detection_interval)
   detection_multiplier = try(local.fabric_policies.rogue_ep_control.detection_multiplier, local.defaults.apic.fabric_policies.rogue_ep_control.detection_multiplier)
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_fabric_wide_settings" {
@@ -75,6 +102,10 @@ module "aci_fabric_wide_settings" {
   overlapping_vlan_validation   = try(local.fabric_policies.global_settings.overlapping_vlan_validation, local.defaults.apic.fabric_policies.global_settings.overlapping_vlan_validation)
   remote_leaf_direct            = try(local.fabric_policies.global_settings.remote_leaf_direct, local.defaults.apic.fabric_policies.global_settings.remote_leaf_direct)
   reallocate_gipo               = try(local.fabric_policies.global_settings.reallocate_gipo, local.defaults.apic.fabric_policies.global_settings.reallocate_gipo)
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_port_tracking" {
@@ -85,6 +116,10 @@ module "aci_port_tracking" {
   admin_state = try(local.fabric_policies.port_tracking.admin_state, local.defaults.apic.fabric_policies.port_tracking.admin_state)
   delay       = try(local.fabric_policies.port_tracking.delay, local.defaults.apic.fabric_policies.port_tracking.delay)
   min_links   = try(local.fabric_policies.port_tracking.min_links, local.defaults.apic.fabric_policies.port_tracking.min_links)
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_ptp" {
@@ -93,6 +128,10 @@ module "aci_ptp" {
 
   count       = try(local.modules.aci_ptp, true) == false ? 0 : 1
   admin_state = try(local.fabric_policies.ptp_admin_state, local.defaults.apic.fabric_policies.ptp_admin_state)
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_ip_aging" {
@@ -101,6 +140,10 @@ module "aci_ip_aging" {
 
   count       = try(local.modules.aci_ip_aging, true) == false ? 0 : 1
   admin_state = try(local.fabric_policies.ip_aging, local.defaults.apic.fabric_policies.ip_aging)
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_system_global_gipo" {
@@ -109,6 +152,10 @@ module "aci_system_global_gipo" {
 
   count          = try(local.modules.aci_system_global_gipo, true) == false ? 0 : 1
   use_infra_gipo = try(local.fabric_policies.use_infra_gipo, local.defaults.apic.fabric_policies.use_infra_gipo)
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_coop_policy" {
@@ -117,6 +164,10 @@ module "aci_coop_policy" {
 
   count             = try(local.modules.aci_coop_policy, true) == false ? 0 : 1
   coop_group_policy = try(local.fabric_policies.coop_group_policy, local.defaults.apic.fabric_policies.coop_group_policy)
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_fabric_isis_policy" {
@@ -125,6 +176,10 @@ module "aci_fabric_isis_policy" {
 
   count               = try(local.modules.aci_fabric_isis_policy, true) == false ? 0 : 1
   redistribute_metric = try(local.fabric_policies.fabric_isis_redistribute_metric, local.defaults.apic.fabric_policies.fabric_isis_redistribute_metric)
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_fabric_isis_bfd" {
@@ -133,6 +188,10 @@ module "aci_fabric_isis_bfd" {
 
   count       = try(local.modules.aci_fabric_isis_bfd, true) == false ? 0 : 1
   admin_state = try(local.fabric_policies.fabric_isis_bfd, local.defaults.apic.fabric_policies.fabric_isis_bfd)
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_fabric_l2_mtu" {
@@ -141,6 +200,10 @@ module "aci_fabric_l2_mtu" {
 
   count       = try(local.modules.aci_fabric_l2_mtu, true) == false ? 0 : 1
   l2_port_mtu = try(local.fabric_policies.l2_port_mtu, local.defaults.apic.fabric_policies.l2_port_mtu)
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_bgp_policy" {
@@ -157,6 +220,10 @@ module "aci_bgp_policy" {
     node_id = rr
     pod_id  = try([for node in local.node_policies.nodes : try(node.pod, local.defaults.apic.fabric_policies.fabric_bgp_ext_rr.pod_id) if node.id == rr][0], local.defaults.apic.node_policies.nodes.pod)
   }]
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_date_time_format" {
@@ -167,6 +234,10 @@ module "aci_date_time_format" {
   display_format = try(local.fabric_policies.date_time_format.display_format, local.defaults.apic.fabric_policies.date_time_format.display_format)
   timezone       = try(local.fabric_policies.date_time_format.timezone, local.defaults.apic.fabric_policies.date_time_format.timezone)
   show_offset    = try(local.fabric_policies.date_time_format.show_offset, local.defaults.apic.fabric_policies.date_time_format.show_offset)
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_dns_policy" {
@@ -185,6 +256,10 @@ module "aci_dns_policy" {
     name    = dom.name
     default = try(dom.default, local.defaults.apic.fabric_policies.dns_policies.domains.default)
   }]
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_error_disabled_recovery" {
@@ -196,6 +271,10 @@ module "aci_error_disabled_recovery" {
   mcp_loop   = try(local.fabric_policies.err_disabled_recovery.mcp_loop, local.defaults.apic.fabric_policies.err_disabled_recovery.mcp_loop)
   ep_move    = try(local.fabric_policies.err_disabled_recovery.ep_move, local.defaults.apic.fabric_policies.err_disabled_recovery.ep_move)
   bpdu_guard = try(local.fabric_policies.err_disabled_recovery.bpdu_guard, local.defaults.apic.fabric_policies.err_disabled_recovery.bpdu_guard)
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_date_time_policy" {
@@ -222,6 +301,10 @@ module "aci_date_time_policy" {
     auth_type = key.auth_type
     trusted   = key.trusted
   }]
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_snmp_policy" {
@@ -254,6 +337,10 @@ module "aci_snmp_policy" {
       name = entry.name
     }]
   }]
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_fabric_pod_policy_group" {
@@ -267,6 +354,7 @@ module "aci_fabric_pod_policy_group" {
   management_access_policy = try("${each.value.management_access_policy}${local.defaults.apic.fabric_policies.pod_policies.management_access_policies.name_suffix}", "")
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_snmp_policy,
     module.aci_date_time_policy,
     module.aci_management_access_policy,
@@ -290,6 +378,7 @@ module "aci_fabric_pod_profile_auto" {
   }]
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_fabric_pod_policy_group,
   ]
 }
@@ -312,6 +401,7 @@ module "aci_fabric_pod_profile_manual" {
   }]
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_fabric_pod_policy_group,
   ]
 }
@@ -323,6 +413,10 @@ module "aci_psu_policy" {
   for_each    = { for pol in try(local.fabric_policies.switch_policies.psu_policies, []) : pol.name => pol if try(local.modules.aci_psu_policy, true) }
   name        = "${each.value.name}${local.defaults.apic.fabric_policies.switch_policies.psu_policies.name_suffix}"
   admin_state = each.value.admin_state
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_node_control_policy" {
@@ -333,6 +427,10 @@ module "aci_node_control_policy" {
   name      = "${each.value.name}${local.defaults.apic.fabric_policies.switch_policies.node_control_policies.name_suffix}"
   dom       = try(each.value.dom, local.defaults.apic.fabric_policies.switch_policies.node_control_policies.dom)
   telemetry = try(each.value.telemetry, local.defaults.apic.fabric_policies.switch_policies.node_control_policies.telemetry)
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_fabric_leaf_switch_policy_group" {
@@ -345,6 +443,7 @@ module "aci_fabric_leaf_switch_policy_group" {
   node_control_policy = try("${each.value.node_control_policy}${local.defaults.apic.fabric_policies.switch_policies.node_control_policies.name_suffix}", "")
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_psu_policy,
     module.aci_node_control_policy,
   ]
@@ -360,6 +459,7 @@ module "aci_fabric_spine_switch_policy_group" {
   node_control_policy = try("${each.value.node_control_policy}${local.defaults.apic.fabric_policies.switch_policies.node_control_policies.name_suffix}", "")
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_psu_policy,
     module.aci_node_control_policy,
   ]
@@ -383,6 +483,7 @@ module "aci_fabric_leaf_switch_profile_auto" {
   }]
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_fabric_leaf_interface_profile_manual,
     module.aci_fabric_leaf_interface_profile_auto,
     module.aci_fabric_leaf_switch_policy_group,
@@ -407,6 +508,7 @@ module "aci_fabric_leaf_switch_profile_manual" {
   interface_profiles = [for profile in try(each.value.interface_profiles, []) : "${profile}${local.defaults.apic.fabric_policies.leaf_interface_profiles.name_suffix}"]
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_fabric_leaf_interface_profile_manual,
     module.aci_fabric_leaf_interface_profile_auto,
     module.aci_fabric_leaf_switch_policy_group,
@@ -431,6 +533,7 @@ module "aci_fabric_spine_switch_profile_auto" {
   }]
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_fabric_spine_interface_profile_manual,
     module.aci_fabric_spine_interface_profile_auto,
     module.aci_fabric_spine_switch_policy_group,
@@ -455,6 +558,7 @@ module "aci_fabric_spine_switch_profile_manual" {
   interface_profiles = [for profile in try(each.value.interface_profiles, []) : "${profile}${local.defaults.apic.fabric_policies.spine_interface_profiles.name_suffix}"]
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_fabric_spine_interface_profile_manual,
     module.aci_fabric_spine_interface_profile_auto,
     module.aci_fabric_spine_switch_policy_group,
@@ -467,6 +571,10 @@ module "aci_fabric_leaf_interface_profile_auto" {
 
   for_each = { for node in try(local.node_policies.nodes, []) : node.id => node if node.role == "leaf" && (try(local.apic.auto_generate_switch_pod_profiles, local.defaults.apic.auto_generate_switch_pod_profiles) || try(local.apic.auto_generate_fabric_leaf_switch_interface_profiles, local.defaults.apic.auto_generate_fabric_leaf_switch_interface_profiles)) && try(local.modules.aci_fabric_leaf_interface_profile, true) }
   name     = replace("${each.value.id}:${each.value.name}", "/^(?P<id>.+):(?P<name>.+)$/", replace(replace(try(local.fabric_policies.leaf_interface_profile_name, local.defaults.apic.fabric_policies.leaf_interface_profile_name), "\\g<id>", "$id"), "\\g<name>", "$name"))
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_fabric_leaf_interface_profile_manual" {
@@ -475,6 +583,10 @@ module "aci_fabric_leaf_interface_profile_manual" {
 
   for_each = { for prof in try(local.fabric_policies.leaf_interface_profiles, []) : prof.name => prof if try(local.modules.aci_fabric_leaf_interface_profile, true) }
   name     = "${each.value.name}${local.defaults.apic.fabric_policies.leaf_interface_profiles.name_suffix}"
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_fabric_spine_interface_profile_auto" {
@@ -483,6 +595,10 @@ module "aci_fabric_spine_interface_profile_auto" {
 
   for_each = { for node in try(local.node_policies.nodes, []) : node.id => node if node.role == "spine" && (try(local.apic.auto_generate_switch_pod_profiles, local.defaults.apic.auto_generate_switch_pod_profiles) || try(local.apic.auto_generate_fabric_spine_switch_interface_profiles, local.defaults.apic.auto_generate_fabric_spine_switch_interface_profiles)) && try(local.modules.aci_fabric_spine_interface_profile, true) }
   name     = replace("${each.value.id}:${each.value.name}", "/^(?P<id>.+):(?P<name>.+)$/", replace(replace(try(local.fabric_policies.spine_interface_profile_name, local.defaults.apic.fabric_policies.spine_interface_profile_name), "\\g<id>", "$id"), "\\g<name>", "$name"))
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_fabric_spine_interface_profile_manual" {
@@ -491,6 +607,10 @@ module "aci_fabric_spine_interface_profile_manual" {
 
   for_each = { for prof in try(local.fabric_policies.spine_interface_profiles, []) : prof.name => prof if try(local.modules.aci_fabric_spine_interface_profile, true) }
   name     = "${each.value.name}${local.defaults.apic.fabric_policies.spine_interface_profiles.name_suffix}"
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_external_connectivity_policy" {
@@ -512,6 +632,10 @@ module "aci_external_connectivity_policy" {
     pod_id = pod.id
     ip     = try(pod.data_plane_tep, null)
   } if try(pod.data_plane_tep, null) != null]
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_infra_dscp_translation_policy" {
@@ -530,6 +654,10 @@ module "aci_infra_dscp_translation_policy" {
   policy_plane  = try(local.fabric_policies.infra_dscp_translation_policy.policy_plane, local.defaults.apic.fabric_policies.infra_dscp_translation_policy.policy_plane)
   span          = try(local.fabric_policies.infra_dscp_translation_policy.span, local.defaults.apic.fabric_policies.infra_dscp_translation_policy.span)
   traceroute    = try(local.fabric_policies.infra_dscp_translation_policy.traceroute, local.defaults.apic.fabric_policies.infra_dscp_translation_policy.traceroute)
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_vmware_vmm_domain" {
@@ -567,6 +695,10 @@ module "aci_vmware_vmm_domain" {
     num_links = try(vel.num_links, local.defaults.apic.fabric_policies.vmware_vmm_domains.vswitch.enhanced_lags.num_links)
   }]
   uplinks = try(each.value.uplinks, [])
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_aaa" {
@@ -580,6 +712,10 @@ module "aci_aaa" {
   default_login_domain     = try(local.fabric_policies.aaa.default_login_domain, "")
   console_realm            = try(local.fabric_policies.aaa.console_realm, local.defaults.apic.fabric_policies.aaa.console_realm)
   console_login_domain     = try(local.fabric_policies.aaa.console_login_domain, "")
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_tacacs" {
@@ -599,6 +735,10 @@ module "aci_tacacs" {
   timeout             = try(each.value.timeout, local.defaults.apic.fabric_policies.aaa.tacacs_providers.timeout)
   mgmt_epg_type       = try(each.value.mgmt_epg, local.defaults.apic.fabric_policies.aaa.tacacs_providers.mgmt_epg)
   mgmt_epg_name       = try(each.value.mgmt_epg, local.defaults.apic.fabric_policies.aaa.tacacs_providers.mgmt_epg) == "oob" ? try(local.node_policies.oob_endpoint_group, local.defaults.apic.node_policies.oob_endpoint_group) : try(local.node_policies.inb_endpoint_group, local.defaults.apic.node_policies.inb_endpoint_group)
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_user" {
@@ -626,6 +766,10 @@ module "aci_user" {
   }]
   certificates = try(each.value.certificates, [])
   ssh_keys     = try(each.value.ssh_keys, [])
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_login_domain" {
@@ -642,6 +786,7 @@ module "aci_login_domain" {
   }]
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tacacs,
   ]
 }
@@ -654,6 +799,10 @@ module "aci_ca_certificate" {
   name              = "${each.value.name}${local.defaults.apic.fabric_policies.aaa.ca_certificates.name_suffix}"
   description       = try(each.value.description, "")
   certificate_chain = each.value.certificate_chain
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_keyring" {
@@ -666,6 +815,10 @@ module "aci_keyring" {
   ca_certificate = try(each.value.ca_certificate, "")
   certificate    = try(each.value.certificate, "")
   private_key    = try(each.value.private_key, "")
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_geolocation" {
@@ -699,6 +852,10 @@ module "aci_geolocation" {
       }]
     }]
   }]
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_remote_location" {
@@ -720,6 +877,10 @@ module "aci_remote_location" {
   ssh_passphrase  = try(each.value.ssh_passphrase, "")
   mgmt_epg_type   = try(each.value.mgmt_epg, local.defaults.apic.fabric_policies.remote_locations.mgmt_epg)
   mgmt_epg_name   = try(each.value.mgmt_epg, local.defaults.apic.fabric_policies.remote_locations.mgmt_epg) == "oob" ? try(local.node_policies.oob_endpoint_group, local.defaults.apic.node_policies.oob_endpoint_group) : try(local.node_policies.inb_endpoint_group, local.defaults.apic.node_policies.inb_endpoint_group)
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_fabric_scheduler" {
@@ -735,6 +896,10 @@ module "aci_fabric_scheduler" {
     hour   = try(win.hour, local.defaults.apic.fabric_policies.schedulers.recurring_windows.hour)
     minute = try(win.minute, local.defaults.apic.fabric_policies.schedulers.recurring_windows.minute)
   }]
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_config_export" {
@@ -749,6 +914,7 @@ module "aci_config_export" {
   scheduler       = try(each.value.scheduler, "")
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_remote_location,
     module.aci_fabric_scheduler,
   ]
@@ -770,6 +936,10 @@ module "aci_snmp_trap_policy" {
     mgmt_epg_type = try(dest.mgmt_epg, local.defaults.apic.fabric_policies.monitoring.snmp_traps.destinations.mgmt_epg)
     mgmt_epg_name = try(dest.mgmt_epg, local.defaults.apic.fabric_policies.monitoring.snmp_traps.destinations.mgmt_epg) == "oob" ? try(local.node_policies.oob_endpoint_group, local.defaults.apic.node_policies.oob_endpoint_group) : try(local.node_policies.inb_endpoint_group, local.defaults.apic.node_policies.inb_endpoint_group)
   }]
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_syslog_policy" {
@@ -798,6 +968,10 @@ module "aci_syslog_policy" {
     mgmt_epg_type = try(dest.mgmt_epg, local.defaults.apic.fabric_policies.monitoring.syslogs.destinations.mgmt_epg)
     mgmt_epg_name = try(dest.mgmt_epg, local.defaults.apic.fabric_policies.monitoring.syslogs.destinations.mgmt_epg) == "oob" ? try(local.node_policies.oob_endpoint_group, local.defaults.apic.node_policies.oob_endpoint_group) : try(local.node_policies.inb_endpoint_group, local.defaults.apic.node_policies.inb_endpoint_group)
   }]
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_monitoring_policy" {
@@ -816,6 +990,7 @@ module "aci_monitoring_policy" {
   }]
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_snmp_trap_policy,
     module.aci_syslog_policy,
   ]
@@ -851,6 +1026,10 @@ module "aci_management_access_policy" {
   https_keyring                = try(each.value.https.key_ring, local.defaults.apic.fabric_policies.pod_policies.management_access_policies.https.key_ring)
   http_admin_state             = try(each.value.http.admin_state, local.defaults.apic.fabric_policies.pod_policies.management_access_policies.http.admin_state)
   http_port                    = try(each.value.http.port, local.defaults.apic.fabric_policies.pod_policies.management_access_policies.http.port)
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_interface_type" {
@@ -863,6 +1042,10 @@ module "aci_interface_type" {
   module   = each.value.module
   port     = each.value.port
   type     = each.value.type
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_smart_licensing" {
@@ -875,6 +1058,10 @@ module "aci_smart_licensing" {
   url                = try(local.fabric_policies.smart_licensing.url, local.defaults.apic.fabric_policies.smart_licensing.url)
   proxy_hostname_ip  = try(local.fabric_policies.smart_licensing.proxy.hostname_ip, "")
   proxy_port         = try(local.fabric_policies.smart_licensing.proxy.port, local.defaults.apic.fabric_policies.smart_licensing.proxy.port)
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_health_score_evaluation_policy" {
@@ -883,6 +1070,10 @@ module "aci_health_score_evaluation_policy" {
 
   count               = try(local.modules.aci_health_score_evaluation_policy, true) ? 1 : 0
   ignore_acked_faults = try(local.fabric_policies.ignore_acked_faults, local.defaults.apic.fabric_policies.ignore_acked_faults)
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_fabric_span_destination_group" {
@@ -903,6 +1094,10 @@ module "aci_fabric_span_destination_group" {
   ttl                 = try(each.value.ttl, local.defaults.apic.fabric_policies.span.destination_groups.ttl)
   span_version        = try(each.value.version, local.defaults.apic.fabric_policies.span.destination_groups.version)
   enforce_version     = try(each.value.enforce_version, local.defaults.apic.fabric_policies.span.destination_groups.enforce_version)
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 module "aci_fabric_span_source_group" {
@@ -930,4 +1125,13 @@ module "aci_fabric_span_source_group" {
   }]
   destination_name        = "${each.value.destination.name}${local.defaults.apic.fabric_policies.span.destination_groups.name_suffix}"
   destination_description = try(each.value.destination.description, "")
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
+}
+
+resource "null_resource" "critical_resources_done" {
+  triggers = {
+  }
 }
