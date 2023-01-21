@@ -32,6 +32,18 @@ resource "null_resource" "dependencies" {
   }
 }
 
+module "aci_config_passphrase" {
+  source  = "netascode/config-passphrase/aci"
+  version = "0.1.0"
+
+  count             = try(local.fabric_policies.config_passphrase, null) != null && try(local.modules.aci_config_passphrase, true) == true ? 1 : 0
+  config_passphrase = local.fabric_policies.config_passphrase
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
+}
+
 module "aci_apic_connectivity_preference" {
   source  = "netascode/apic-connectivity-preference/aci"
   version = "0.1.0"
