@@ -1,4 +1,4 @@
-## 0.4.0 (unreleased)
+## 0.4.0
 
 - Add support for smart licensing
 - Fix regex validation of VMware VMM vCenter username to allow for `domain\username` format
