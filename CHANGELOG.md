@@ -2,6 +2,7 @@
 
 - Load default values from `nac-defaults` module
 - Add `snapshot`parameter to config export policies
+- Add PTP `global_domain`, `profile`, `announce_interval`, `announce_timeout`, `sync_interval`, `delay_interval` attributes
 
 ## 0.4.0
 

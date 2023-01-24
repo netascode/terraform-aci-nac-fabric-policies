@@ -141,7 +141,7 @@ module "aci_port_tracking" {
 
 module "aci_ptp" {
   source  = "netascode/ptp/aci"
-  version = "0.1.0"
+  version = "0.1.1"
 
   count             = try(local.modules.aci_ptp, true) == false ? 0 : 1
   admin_state       = try(local.fabric_policies.ptp.admin_state, local.defaults.apic.fabric_policies.ptp.admin_state)
