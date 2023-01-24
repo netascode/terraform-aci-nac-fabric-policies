@@ -1,4 +1,4 @@
-## 0.4.1 (unreleased)
+## 0.4.1
 
 - Add `snapshot`parameter to config export policies
 - Add PTP `global_domain`, `profile`, `announce_interval`, `announce_timeout`, `sync_interval`, `delay_interval` attributes
