@@ -143,8 +143,14 @@ module "aci_ptp" {
   source  = "netascode/ptp/aci"
   version = "0.1.0"
 
-  count       = try(local.modules.aci_ptp, true) == false ? 0 : 1
-  admin_state = try(local.fabric_policies.ptp_admin_state, local.defaults.apic.fabric_policies.ptp_admin_state)
+  count             = try(local.modules.aci_ptp, true) == false ? 0 : 1
+  admin_state       = try(local.fabric_policies.ptp.admin_state, local.defaults.apic.fabric_policies.ptp.admin_state)
+  global_domain     = try(local.fabric_policies.ptp.global_domain, null)
+  profile           = try(local.fabric_policies.ptp.profile, null)
+  announce_interval = try(local.fabric_policies.ptp.announce_interval, null)
+  announce_timeout  = try(local.fabric_policies.ptp.announce_timeout, null)
+  sync_interval     = try(local.fabric_policies.ptp.sync_interval, null)
+  delay_interval    = try(local.fabric_policies.ptp.delay_interval, null)
 
   depends_on = [
     null_resource.dependencies,
