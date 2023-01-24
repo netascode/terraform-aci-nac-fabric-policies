@@ -927,6 +927,7 @@ module "aci_config_export" {
   name            = "${each.value.name}${local.defaults.apic.fabric_policies.config_exports.name_suffix}"
   description     = try(each.value.description, "")
   format          = try(each.value.format, local.defaults.apic.fabric_policies.config_exports.format)
+  snapshot        = try(each.value.snapshot, local.defaults.apic.fabric_policies.config_exports.snapshot)
   remote_location = try(each.value.remote_location, "")
   scheduler       = try(each.value.scheduler, "")
 
