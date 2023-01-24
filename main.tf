@@ -921,7 +921,7 @@ module "aci_fabric_scheduler" {
 
 module "aci_config_export" {
   source  = "netascode/config-export/aci"
-  version = "0.1.0"
+  version = "0.1.1"
 
   for_each        = { for ce in try(local.fabric_policies.config_exports, []) : ce.name => ce if try(local.modules.aci_config_export, true) }
   name            = "${each.value.name}${local.defaults.apic.fabric_policies.config_exports.name_suffix}"

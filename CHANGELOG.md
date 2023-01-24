@@ -1,6 +1,7 @@
 ## 0.4.1 (unreleased)
 
 - Load default values from `nac-defaults` module
+- Add `snapshot`parameter to config export policies
 
 ## 0.4.0
 
