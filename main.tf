@@ -836,6 +836,7 @@ module "aci_keyring" {
 
   depends_on = [
     null_resource.dependencies,
+    module.aci_ca_certificate
   ]
 }
 
