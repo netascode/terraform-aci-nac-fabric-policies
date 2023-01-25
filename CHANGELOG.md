@@ -1,7 +1,8 @@
-## 0.4.1
+## 0.4.1 (unreleased)
 
-- Add `snapshot`parameter to config export policies
+- Add `snapshot` parameter to config export policies
 - Add PTP `global_domain`, `profile`, `announce_interval`, `announce_timeout`, `sync_interval`, `delay_interval` attributes
+- Fix dependency between keyrings and CA certificates
 
 ## 0.4.0
 
