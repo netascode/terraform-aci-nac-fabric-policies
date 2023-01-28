@@ -1,3 +1,7 @@
+## 0.4.2 (unreleased)
+
+- Add VMware VMM domains to critical resources to ensure domains are provisioned before being associated to EPGs
+
 ## 0.4.1
 
 - Add `snapshot` parameter to config export policies

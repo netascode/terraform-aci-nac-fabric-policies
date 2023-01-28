@@ -1153,5 +1153,8 @@ module "aci_fabric_span_source_group" {
 
 resource "null_resource" "critical_resources_done" {
   triggers = {
+    dependencies = join(",", concat(
+      values(module.aci_vmware_vmm_domain)[*].dn, # provision VMware VMM domains (including custom uplink naming) before associating to EPGs
+    ))
   }
 }
