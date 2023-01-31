@@ -1,4 +1,4 @@
-## 0.4.2 (unreleased)
+## 0.4.2
 
 - Add VMware VMM domains to critical resources to ensure domains are provisioned before being associated to EPGs
 
