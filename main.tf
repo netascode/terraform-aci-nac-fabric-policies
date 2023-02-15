@@ -942,7 +942,7 @@ module "aci_config_export" {
 
 module "aci_snmp_trap_policy" {
   source  = "netascode/snmp-trap-policy/aci"
-  version = "0.2.0"
+  version = "0.2.1"
 
   for_each    = { for trap in try(local.fabric_policies.monitoring.snmp_traps, []) : trap.name => trap if try(local.modules.aci_snmp_trap_policy, true) }
   name        = "${each.value.name}${local.defaults.apic.fabric_policies.monitoring.snmp_traps.name_suffix}"

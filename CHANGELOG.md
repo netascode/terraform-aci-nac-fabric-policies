@@ -8,6 +8,7 @@
 - Make the NTP `key` variable sensitive
 - Make the SNMP policy `privacy_key` and `authorization_key` variables sensitive
 - Make the TACACS `monitoring_password` and `key` variables sensitive
+- Make the SNMP trap policy `community` variable sensitive
 
 ## 0.4.2
 
