@@ -879,7 +879,7 @@ module "aci_geolocation" {
 
 module "aci_remote_location" {
   source  = "netascode/remote-location/aci"
-  version = "0.1.0"
+  version = "0.1.1"
 
   for_each        = { for rl in try(local.fabric_policies.remote_locations, []) : rl.name => rl if try(local.modules.aci_remote_location, true) }
   name            = "${each.value.name}${local.defaults.apic.fabric_policies.remote_locations.name_suffix}"

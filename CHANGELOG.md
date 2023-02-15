@@ -1,6 +1,7 @@
 ## 0.4.3 (unreleased)
 
 - Make the `config_passphrase` variable sensitive
+- Make the remote location `password`, `ssh_private_key` and `ssh_passphrase` variables sensitive
 
 ## 0.4.2
 
