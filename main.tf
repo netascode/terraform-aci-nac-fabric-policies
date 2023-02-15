@@ -738,7 +738,7 @@ module "aci_aaa" {
 
 module "aci_tacacs" {
   source  = "netascode/tacacs/aci"
-  version = "0.1.0"
+  version = "0.1.1"
 
   for_each            = { for tacacs in try(local.fabric_policies.aaa.tacacs_providers, []) : tacacs.hostname_ip => tacacs if try(local.modules.aci_tacacs, true) }
   hostname_ip         = each.value.hostname_ip

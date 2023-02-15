@@ -6,7 +6,8 @@
 - Make the VMM credential policy `password` variable sensitive
 - Make the keyring `private_key` variable sensitive
 - Make the NTP `key` variable sensitive
-- Make the SNMP policy `privacy_key` and `authorization_key` variable sensitive
+- Make the SNMP policy `privacy_key` and `authorization_key` variables sensitive
+- Make the TACACS `monitoring_password` and `key` variables sensitive
 
 ## 0.4.2
 
