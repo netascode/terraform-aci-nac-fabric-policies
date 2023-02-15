@@ -761,7 +761,7 @@ module "aci_tacacs" {
 
 module "aci_user" {
   source  = "netascode/user/aci"
-  version = "0.2.0"
+  version = "0.2.1"
 
   for_each         = { for user in try(local.fabric_policies.aaa.users, []) : user.username => user if try(local.modules.aci_user, true) }
   username         = each.value.username
