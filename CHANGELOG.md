@@ -1,3 +1,7 @@
+## 0.4.3 (unreleased)
+
+- Make the `config_passphrase` variable sensitive
+
 ## 0.4.2
 
 - Add VMware VMM domains to critical resources to ensure domains are provisioned before being associated to EPGs

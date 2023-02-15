@@ -34,7 +34,7 @@ resource "null_resource" "dependencies" {
 
 module "aci_config_passphrase" {
   source  = "netascode/config-passphrase/aci"
-  version = "0.1.0"
+  version = "0.1.1"
 
   count             = try(local.fabric_policies.config_passphrase, null) != null && try(local.modules.aci_config_passphrase, true) == true ? 1 : 0
   config_passphrase = local.fabric_policies.config_passphrase
