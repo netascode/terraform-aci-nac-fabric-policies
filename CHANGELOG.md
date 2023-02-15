@@ -4,6 +4,7 @@
 - Make the remote location `password`, `ssh_private_key` and `ssh_passphrase` variables sensitive
 - Make the user `password` variable sensitive
 - Make the VMM credential policy `password` variable sensitive
+- Make the keyring `private_key` variable sensitive
 
 ## 0.4.2
 

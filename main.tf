@@ -825,7 +825,7 @@ module "aci_ca_certificate" {
 
 module "aci_keyring" {
   source  = "netascode/keyring/aci"
-  version = "0.1.0"
+  version = "0.1.1"
 
   for_each       = { for kr in try(local.fabric_policies.aaa.key_rings, []) : kr.name => kr if try(local.modules.aci_keyring, true) }
   name           = "${each.value.name}${local.defaults.apic.fabric_policies.aaa.key_rings.name_suffix}"
