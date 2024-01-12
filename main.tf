@@ -1,6 +1,6 @@
 locals {
   user_defaults      = { "defaults" : try(var.model.defaults, {}) }
-  defaults           = lookup(yamldecode(data.utils_yaml_merge.defaults.output), "defaults")
+  defaults           = yamldecode(data.utils_yaml_merge.defaults.output)["defaults"]
   modules            = try(var.model.modules, {})
   apic               = try(var.model.apic, {})
   fabric_policies    = try(local.apic.fabric_policies, {})
